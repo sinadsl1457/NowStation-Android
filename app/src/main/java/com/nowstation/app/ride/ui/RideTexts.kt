@@ -16,6 +16,19 @@ object RideTexts {
         }
     }
 
+    /**
+     * 상태 표시줄 칩(Android 16 Live Updates)에 들어갈 짧은 글자. 칩은 몇 글자만 보여서 이번 역 이름만 둔다.
+     * 열차 소식이 없을 때는 틀린 역을 붙여 두지 않도록 비운다.
+     */
+    fun chip(ride: ActiveRide): String? {
+        val v = ride.view
+        return when (v.status) {
+            RideStatus.WAITING -> "대기"
+            RideStatus.AT_STATION, RideStatus.MOVING, RideStatus.HOLDING_BETWEEN -> v.thisStation
+            RideStatus.STALE, RideStatus.UNKNOWN -> null
+        }
+    }
+
     fun detail(ride: ActiveRide): String {
         val v = ride.view
         val main = when (v.status) {

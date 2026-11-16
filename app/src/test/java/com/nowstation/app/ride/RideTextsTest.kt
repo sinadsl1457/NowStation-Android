@@ -37,4 +37,12 @@ class RideTextsTest {
         assertEquals("다음 역 복정 · 연결 끊김(다시 시도 중)", RideTexts.detail(ride(view(RideStatus.MOVING, "가천대", "복정"), online = false)))
         assertEquals("위치 확인 중", RideTexts.title(ride(view(RideStatus.STALE, "가천대"))))
     }
+
+    @Test
+    fun `상태 표시줄 칩은 이번 역 이름만, 소식이 없으면 비운다`() {
+        assertEquals("대기", RideTexts.chip(ride(view(RideStatus.WAITING, "태평"))))
+        assertEquals("역삼", RideTexts.chip(ride(view(RideStatus.MOVING, "역삼", "강남"))))
+        assertEquals("한티", RideTexts.chip(ride(view(RideStatus.HOLDING_BETWEEN, "한티", "선릉"))))
+        assertEquals(null, RideTexts.chip(ride(view(RideStatus.STALE, "역삼"))))
+    }
 }
