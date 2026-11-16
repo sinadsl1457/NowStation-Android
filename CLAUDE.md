@@ -18,7 +18,8 @@ com.nowstation.app
 └ ride/      진행 중인 탑승. 화면이 사라져도 계속돼야 해서 @Singleton RideTracker가 갖는다
    ├ domain/  RideTracker(앱 전체가 같이 보는 탑승 상태), 모델, 저장소 인터페이스
    ├ data/    서버 탑승 API
-   ├ service/ 포그라운드 서비스(몇 초마다 서버에서 받아 옴) + 잠금화면 진행 중 알림
+   ├ motion/  가속도 → 출발·도착 사건(순수 Kotlin, 합성 신호로 테스트). 기준값은 MotionRules 한곳(실기기로 다시 맞출 것)
+   ├ service/ 포그라운드 서비스(갱신·센서·진동·CPU 깨우기) + 잠금화면 진행 중 알림(Android 16 Live Update)
    └ ui/      탑승 화면, 화면·알림이 같이 쓰는 문구(RideTexts)
 ```
 - 의존 방향: ui → domain ← data. domain은 Android를 모른다(RideTracker도 순수 Kotlin + 주입된 Clock).
@@ -31,5 +32,7 @@ com.nowstation.app
 - 커밋은 기능 하나씩. 피드백 반영 커밋은 무엇을 반영했는지 쓴다. squash·amend·force push 금지.
 - 버그를 고치면 고치기 전에 실패하는 테스트로 고정한다.
 - 테스트: ViewModel·RideTracker는 가짜 저장소, 저장소는 MockWebServer(서버와 같은 응답 모양), 화면은 에뮬레이터를 adb로 눌러 확인.
+- 움직임 확인: `adb emu sensor set acceleration x:9.77631:0.812349`로 x에 ±0.9를 10초 넣고 `adb logcat -s RideService`
+- 화면 잠금 확인은 `adb shell locksettings set-pin 1234` → 끝나면 `locksettings clear --old 1234`
 - 에뮬레이터 한글 입력: 키보드가 한글 두벌식이라 `adb shell input text`에 자판 키를 넣는다(태평 = xovud, 강남 = rkdska). BACK 키는 앱을 닫을 수 있어 쓰지 않는다.
 - 주석은 결정과 이유만.
