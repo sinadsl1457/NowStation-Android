@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
-  개발용(debug) 빌드만: http 허용. 로컬 서버(10.0.2.2)와 도메인·https가 아직 없는 배포 서버(IP 주소)에 붙으려고.
-  정식(release) 빌드는 src/main의 설정(로컬만 http)을 쓴다 → 배포 서버에는 https가 필요하다.
--->
-<network-security-config>
-    <base-config cleartextTrafficPermitted="true" />
-</network-security-config>

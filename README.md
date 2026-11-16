@@ -62,7 +62,7 @@ Kotlin · Jetpack Compose(Material 3) · Coroutines/Flow · Hilt · Retrofit + k
 ./gradlew installDebug                                   # 서버 주소: local.properties의 API_BASE_URL, 없으면 10.0.2.2:8080(에뮬레이터에서 본 내 컴퓨터)
 ./gradlew installDebug -PAPI_BASE_URL=http://10.0.2.2:8080/   # 잠깐 다른 서버로(시연용 재생 서버 등)
 ```
-- 배포 서버(AWS EC2)는 아직 http + IP라서 **개발용(debug) 빌드만** 붙습니다(`src/debug/res/xml/network_security_config.xml`). 정식(release) 빌드에는 https가 필요합니다.
+- 배포 서버(AWS EC2)는 https(Caddy + Let's Encrypt)입니다. 앱은 http를 내 컴퓨터(10.0.2.2·localhost)에만 허용하고(`res/xml/network_security_config.xml`), 정식(release) 빌드는 서버 주소가 https가 아니면 빌드가 멈춥니다.
 - minSdk 26, targetSdk 36. Live Update는 Android 16 이상에서만 보이고, 그 아래에서는 일반 진행 중 알림입니다.
 
 ## 한계

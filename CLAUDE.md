@@ -8,8 +8,8 @@
 - 버전은 MapPilot-Android에서 이 컴퓨터로 빌드가 확인된 것(AGP 9.3.3, Kotlin 2.2.10, Compose BOM 2025.12, Hilt 2.60.1)
 - minSdk 26, targetSdk 36. 에뮬레이터는 Android 17(API 37)
 - JDK: Android Studio 내장 `export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"`
-- 서버 주소: `local.properties`의 `API_BASE_URL`, 없으면 `http://10.0.2.2:8080/`(에뮬레이터에서 본 내 컴퓨터). 지금은 배포 서버(시드니 EC2, http + IP)로 설정돼 있다
-- http: debug 빌드는 전부 허용(`src/debug/res/xml`), release는 10.0.2.2·localhost만(배포 서버는 https 필요)
+- 서버 주소: `local.properties`의 `API_BASE_URL`, 없으면 `http://10.0.2.2:8080/`(에뮬레이터에서 본 내 컴퓨터). 지금은 배포 서버(시드니 EC2, https `<IP를 -로>.sslip.io`)로 설정돼 있다. 시연용 재생 서버는 `-PAPI_BASE_URL=http://10.0.2.2:8080/`
+- http: 모든 빌드에서 10.0.2.2·localhost만 허용(배포 서버는 https). release는 `API_BASE_URL`이 https가 아니면 빌드 중단
 
 ## 구조 — 기능 폴더는 "상태를 누가 갖고 언제 사라지나"로 나눈다
 ```
