@@ -23,6 +23,19 @@ android {
         }
     }
 
+    // 정식 빌드 서명(업로드 키). local.properties에 RELEASE_* 가 있을 때만(없으면 서명 안 된 release가 나온다)
+    val releaseStoreFile = localProperties.getProperty("RELEASE_STORE_FILE")
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD")
+                keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")
+                keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")
+            }
+        }
+    }
+
     defaultConfig {
         applicationId = "com.nowstation.app"
         minSdk = 26
@@ -34,7 +47,11 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8: 쓰지 않는 코드·리소스를 빼고 이름을 줄인다. 직렬화·Retrofit·Hilt 규칙은 각 라이브러리에 들어 있다
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }
     compileOptions {
@@ -76,4 +93,13 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)
     debugImplementation(libs.androidx.compose.ui.tooling)
+}
+
+// 정식 빌드가 http 서버를 보면 막는다(release는 http를 허용하지 않아 앱이 서버에 닿지 못한다)
+val releaseApiUrl: String = providers.gradleProperty("API_BASE_URL").orNull ?: localProperties.getProperty("API_BASE_URL", "")
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    val url = releaseApiUrl
+    doFirst {
+        check(url.startsWith("https://")) { "정식 빌드의 API_BASE_URL은 https여야 한다(지금: '$url'). local.properties를 확인" }
+    }
 }
