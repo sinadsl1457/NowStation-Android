@@ -24,7 +24,7 @@ import javax.inject.Inject
 /**
  * 탑승 중에만 도는 포그라운드 서비스. 앱을 닫아도 몇 초마다 서버에서 받아 와 잠금화면 알림을 갱신한다.
  * 서버가 실시간 API를 15초마다 받으니 그보다 자주 받는다(앱↔서버는 하루 한도와 무관).
- * 가속도 센서로 열차 출발·도착을 감지해 보내고, 내릴 역 알림이 켜지면 진동한다.
+ * 가속도 센서로 열차 출발·도착을 감지해 보내고, 내릴 역 알림이 켜지면 진동 + 팝업 알림을 한 번 띄운다.
  * 화면이 꺼져도 센서가 멈추지 않게 탑승 중에는 CPU를 깨워 둔다(최대 [WAKE_LOCK_MILLIS]).
  */
 @AndroidEntryPoint
@@ -82,14 +82,18 @@ class RideService : LifecycleService() {
                 }
                 var previous: ActiveRide? = null
                 tracker.state.collect { ride ->
-                    if (ActiveRide.alightAlertStarted(previous, ride)) vibrator.vibrate()
+                    val manager = getSystemService(NotificationManager::class.java)
+                    if (ride != null && ActiveRide.alightAlertStarted(previous, ride)) {
+                        vibrator.vibrate()
+                        manager.notify(RideNotifications.ALIGHT_NOTIFICATION_ID, notifications.buildAlight(ride))
+                    }
                     previous = ride
                     if (ride == null) {
+                        manager.cancel(RideNotifications.ALIGHT_NOTIFICATION_ID)
                         stopForeground(STOP_FOREGROUND_REMOVE)
                         stopSelf()
                     } else {
-                        getSystemService(NotificationManager::class.java)
-                            .notify(RideNotifications.NOTIFICATION_ID, notifications.build(ride))
+                        manager.notify(RideNotifications.NOTIFICATION_ID, notifications.build(ride))
                     }
                 }
             }

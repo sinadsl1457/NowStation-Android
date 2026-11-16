@@ -29,15 +29,39 @@ class RideNotifications @Inject constructor(@ApplicationContext private val cont
             setSound(null, null)
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
-        context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        // 진행 중 알림은 몇 초마다 바뀌어 조용해야 하고, 내릴 역 알림은 다른 앱을 보는 중에도 눈에 띄어야 해서 채널을 나눈다.
+        // 진동은 AlightVibrator가 알람 용도로 직접 낸다(무음 모드에서도 울리게) → 채널은 팝업만.
+        val alight = NotificationChannel(ALIGHT_CHANNEL_ID, "내릴 역 알림", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "내릴 역 직전에 화면 위로 알려 줘요"
+            setSound(null, null)
+            enableVibration(false)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        }
+        context.getSystemService(NotificationManager::class.java).createNotificationChannels(listOf(channel, alight))
     }
 
+    /** 내릴 역 직전 한 번: 다른 앱 위로 팝업, 잠금화면에도. 2분 뒤 저절로 사라진다(진행 중 알림이 계속 보여 주므로). */
+    fun buildAlight(ride: ActiveRide): Notification =
+        NotificationCompat.Builder(context, ALIGHT_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_train)
+            .setContentTitle(RideTexts.title(ride))
+            .setContentText(RideTexts.detail(ride))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(openApp())
+            .setAutoCancel(true)
+            .setTimeoutAfter(ALIGHT_TIMEOUT_MILLIS)
+            .build()
+
+    private fun openApp(): PendingIntent = PendingIntent.getActivity(
+        context, 0,
+        Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+        PendingIntent.FLAG_IMMUTABLE,
+    )
+
     fun build(ride: ActiveRide?): Notification {
-        val open = PendingIntent.getActivity(
-            context, 0,
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
-            PendingIntent.FLAG_IMMUTABLE,
-        )
+        val open = openApp()
         val end = PendingIntent.getService(
             context, 1,
             Intent(context, RideService::class.java).setAction(RideService.ACTION_END),
@@ -66,5 +90,8 @@ class RideNotifications @Inject constructor(@ApplicationContext private val cont
     companion object {
         const val CHANNEL_ID = "ride"
         const val NOTIFICATION_ID = 1
+        const val ALIGHT_CHANNEL_ID = "alight"
+        const val ALIGHT_NOTIFICATION_ID = 2
+        private const val ALIGHT_TIMEOUT_MILLIS = 2 * 60 * 1000L
     }
 }
