@@ -16,6 +16,8 @@ fun view(status: RideStatus = RideStatus.WAITING, thisStation: String? = "태평
 class FakeRideRepository : RideRepository {
     var startResult: AppResult<RideView> = AppResult.Success(view())
     var getResult: AppResult<RideView> = AppResult.Success(view())
+    /** null이면 getResult와 같다. */
+    var motionResult: AppResult<RideView>? = null
     val sentMotions = mutableListOf<Pair<List<Motion>, Instant>>()
     val ended = mutableListOf<String>()
 
@@ -23,7 +25,7 @@ class FakeRideRepository : RideRepository {
     override suspend fun get(rideId: String) = getResult
     override suspend fun sendMotion(rideId: String, motions: List<Motion>, sentAt: Instant): AppResult<RideView> {
         sentMotions += motions to sentAt
-        return getResult
+        return motionResult ?: getResult
     }
     override suspend fun end(rideId: String): AppResult<Unit> {
         ended += rideId
