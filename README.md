@@ -45,4 +45,5 @@ app/src/main/java/com/nowstation/app/
 ./gradlew installDebug
 ./gradlew testDebugUnitTest
 ```
-실기기에서 쓰려면 `local.properties`에 `API_BASE_URL=http://<서버 주소>:8080/`.
+배포 서버(AWS 시드니 EC2)를 쓰려면 `local.properties`에 `API_BASE_URL=http://<서버 IP>:8080/`(git 제외라 IP가 저장소에 남지 않음).
+개발용(debug) 빌드만 http를 허용한다(`src/debug/res/xml/network_security_config.xml`). 정식(release) 빌드는 https가 필요하다.
