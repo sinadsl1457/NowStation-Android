@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 지하철 앞모습(108dp 아이콘의 가운데 안전 영역 안) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M40,34h28a8,8 0 0,1 8,8v24a8,8 0 0,1 -8,8h-28a8,8 0 0,1 -8,-8v-24a8,8 0 0,1 8,-8z" />
+    <path android:fillColor="#356DF3" android:pathData="M38,40h32v12h-32z" />
+    <path android:fillColor="#356DF3" android:pathData="M42,62m-3,0a3,3 0 1,1 6,0a3,3 0 1,1 -6,0" />
+    <path android:fillColor="#356DF3" android:pathData="M66,62m-3,0a3,3 0 1,1 6,0a3,3 0 1,1 -6,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M38,74l-4,8h4l4,-8z M70,74l4,8h-4l-4,-8z" />
+</vector>
