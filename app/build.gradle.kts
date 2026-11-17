@@ -15,6 +15,13 @@ val localProperties = Properties().apply {
     if (file.exists()) file.inputStream().use { load(it) }
 }
 
+val appVersionCode: Int = providers.gradleProperty("VERSION_CODE").orNull?.toInt()
+    ?: providers.exec {
+        commandLine("git", "rev-list", "--count", "HEAD")
+        isIgnoreExitValue = true
+    }.standardOutput.asText.get().trim().toIntOrNull()
+    ?: 1
+
 android {
     namespace = "com.nowstation.app"
     compileSdk {
@@ -23,15 +30,17 @@ android {
         }
     }
 
-    // 정식 빌드 서명(업로드 키). local.properties에 RELEASE_* 가 있을 때만(없으면 서명 안 된 release가 나온다)
-    val releaseStoreFile = localProperties.getProperty("RELEASE_STORE_FILE")
+    // 정식 빌드 서명(업로드 키). 내 컴퓨터는 local.properties, GitHub Actions는 비밀값을 Gradle 속성으로(ORG_GRADLE_PROJECT_RELEASE_*)
+    // 둘 다 없으면 서명 안 된 release가 나온다(CI 검사용)
+    fun releaseSetting(name: String): String? = providers.gradleProperty(name).orNull ?: localProperties.getProperty(name)
+    val releaseStoreFile = releaseSetting("RELEASE_STORE_FILE")
     signingConfigs {
         if (releaseStoreFile != null) {
             create("release") {
                 storeFile = file(releaseStoreFile)
-                storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD")
-                keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")
-                keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")
+                storePassword = releaseSetting("RELEASE_STORE_PASSWORD")
+                keyAlias = releaseSetting("RELEASE_KEY_ALIAS")
+                keyPassword = releaseSetting("RELEASE_KEY_PASSWORD")
             }
         }
     }
@@ -40,8 +49,9 @@ android {
         applicationId = "com.taektoy.nowstation" // 스토어 이름. 코드 패키지(namespace)와 따로: com.nowstation.app은 다른 개발자가 선점
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        // Play는 같은 versionCode를 다시 받지 않는다 → main의 커밋 수(늘기만 하고, 어디서 빌드해도 같음). -PVERSION_CODE로 덮어쓰기
+        versionCode = appVersionCode
+        versionName = "0.1.$appVersionCode"
         buildConfigField("String", "API_BASE_URL", "\"${providers.gradleProperty("API_BASE_URL").orNull ?: localProperties.getProperty("API_BASE_URL", "http://10.0.2.2:8080/")}\"")
     }
 

@@ -1,0 +1,78 @@
+# 앱 배포(CD): 태그(v*)를 push하거나 Actions에서 버튼을 누르면
+# 테스트 → versionCode 자동(main의 커밋 수) → 업로드 키로 서명한 .aab → Google Play API로 테스트 트랙에 업로드.
+# 업로드 키·Play 서비스 계정은 GitHub 비밀값(Secrets)에만 있다.
+name: Android Play 배포
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      track:
+        description: "Play 트랙(alpha = 비공개 테스트, internal = 내부 테스트, production = 프로덕션)"
+        default: alpha
+        required: true
+
+concurrency:
+  group: play-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # versionCode = 커밋 수라서 기록 전체가 필요
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: 업로드 키 꺼내기
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo "RELEASE_KEYSTORE_BASE64 비밀값이 없다" >&2; exit 1; }
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+
+      - name: 테스트 + 서명된 .aab
+        env:
+          ORG_GRADLE_PROJECT_RELEASE_STORE_FILE: ${{ runner.temp }}/upload.jks
+          ORG_GRADLE_PROJECT_RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          ORG_GRADLE_PROJECT_API_BASE_URL: https://${{ vars.PUBLIC_HOST }}/
+        run: ./gradlew testDebugUnitTest bundleRelease
+
+      - name: 버전·서명 확인
+        run: |
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          jarsigner -verify "$AAB" >/dev/null || { echo "서명되지 않은 .aab" >&2; exit 1; }
+          echo "versionCode $(git rev-list --count HEAD), 커밋 ${GITHUB_SHA::7}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: 출시 노트(마지막 커밋 제목)
+        run: |
+          mkdir -p whatsnew
+          git log -1 --format=%s | cut -c1-480 > whatsnew/whatsnew-ko-KR
+
+      - name: Google Play에 업로드
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.taektoy.nowstation
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.track || 'alpha' }}
+          status: completed
+          mappingFile: app/build/outputs/mapping/release/mapping.txt # Play 비정상 종료 보고서의 줄여진 이름을 되살림
+          whatsNewDirectory: whatsnew
+
+      - name: .aab 보관(손으로 올려야 할 때)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: ignore
