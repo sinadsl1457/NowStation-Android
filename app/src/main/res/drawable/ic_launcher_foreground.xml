@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 지하철 앞모습(108dp 아이콘의 가운데 안전 영역 안) -->
+<!-- 노선 위의 "지금 역": 가로 노선, 양쪽 역, 가운데 지금 역 표시(108dp 아이콘의 가운데 안전 원(지름 66) 안: 원형으로 잘리는 기기에서도 양 끝 역이 보이게) -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
-    <path android:fillColor="#FFFFFF"
-        android:pathData="M40,34h28a8,8 0 0,1 8,8v24a8,8 0 0,1 -8,8h-28a8,8 0 0,1 -8,-8v-24a8,8 0 0,1 8,-8z" />
-    <path android:fillColor="#356DF3" android:pathData="M38,40h32v12h-32z" />
-    <path android:fillColor="#356DF3" android:pathData="M42,62m-3,0a3,3 0 1,1 6,0a3,3 0 1,1 -6,0" />
-    <path android:fillColor="#356DF3" android:pathData="M66,62m-3,0a3,3 0 1,1 6,0a3,3 0 1,1 -6,0" />
-    <path android:fillColor="#FFFFFF" android:pathData="M38,74l-4,8h4l4,-8z M70,74l4,8h-4l-4,-8z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M31,51.5h46a2.5,2.5 0 0,1 0,5h-46a2.5,2.5 0 0,1 0,-5z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M33,54m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M75,54m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,54m-14,0a14,14 0 1,1 28,0a14,14 0 1,1 -28,0" />
+    <path android:fillColor="#356DF3" android:pathData="M54,54m-9,0a9,9 0 1,1 18,0a9,9 0 1,1 -18,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,54m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
 </vector>
