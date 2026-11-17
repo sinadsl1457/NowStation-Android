@@ -12,6 +12,11 @@ on:
         description: "Play 트랙(alpha = 비공개 테스트, internal = 내부 테스트, production = 프로덕션)"
         default: alpha
         required: true
+      status:
+        description: "completed = 바로 출시, draft = 초안(앱이 첫 심사를 통과하기 전에는 draft만 가능 → Play Console에서 '검토를 위해 전송')"
+        type: choice
+        options: [completed, draft]
+        default: completed
 
 concurrency:
   group: play-release
@@ -64,8 +69,8 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.taektoy.nowstation
           releaseFiles: app/build/outputs/bundle/release/app-release.aab
-          track: ${{ inputs.track || 'alpha' }}
-          status: completed
+          tracks: ${{ inputs.track || 'alpha' }}
+          status: ${{ inputs.status || 'completed' }}
           mappingFile: app/build/outputs/mapping/release/mapping.txt # Play 비정상 종료 보고서의 줄여진 이름을 되살림
           whatsNewDirectory: whatsnew
 
