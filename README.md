@@ -55,6 +55,30 @@ Kotlin · Jetpack Compose(Material 3) · Coroutines/Flow · Hilt · Retrofit + k
 ./gradlew testDebugUnitTest
 ```
 
+## CI/CD (GitHub Actions → Google Play)
+
+```
+push(모든 브랜치) ─→ [CI] 단위 테스트 → 개발용 빌드 → 정식 빌드(R8) 확인          .github/workflows/android.yml
+
+태그 v* 또는 버튼 ─→ [CD] 단위 테스트 → versionCode 자동 → 업로드 키로 서명 → 서명 확인   .github/workflows/release.yml
+                       → Google Play Developer API로 테스트 트랙에 업로드(R8 mapping, 출시 노트 포함)
+```
+
+| 결정 | 이유 |
+|---|---|
+| **versionCode = main의 커밋 수** | Play는 같은 번호를 다시 받지 않는다. 손으로 올리다 번호가 겹쳐 거절당하던 문제를 없앰. 내 컴퓨터·GitHub 어디서 빌드해도 같은 번호 |
+| 서명 값은 GitHub 비밀값에만 | 업로드 키·비밀번호는 저장소에 없다. 빌드할 때만 꺼내 쓰고, 실제 앱 서명 키는 Google이 보관(Play 앱 서명) |
+| **서비스 계정은 이 앱의 출시 권한만** | 회사 개발자 계정이라 다른 앱이 있다. 계정 전체가 아니라 지금역 하나, 출시 권한만 줘서 키가 새도 다른 앱은 건드릴 수 없게 |
+| 별도 Google Cloud 프로젝트 | Play API·서비스 계정을 다른 프로젝트와 섞지 않음 |
+| 출시 노트 = 마지막 커밋 제목 | 테스터가 무엇이 바뀌었는지 Play에서 바로 봄 |
+| R8 mapping 같이 업로드 | 줄여진 코드 이름 때문에 읽을 수 없는 비정상 종료 보고서를 Play Console에서 원래 이름으로 |
+| 첫 심사 전에는 초안(draft) | Play는 첫 심사를 통과하기 전의 앱에 바로 출시하는 릴리스를 API로 만들 수 없게 한다(실제로 거절당해 선택지로 추가) |
+
+```bash
+git tag v0.1.30 && git push origin v0.1.30     # 비공개 테스트 트랙에 바로 출시
+# 또는 Actions → "Android Play 배포" → Run workflow(트랙: alpha·internal·production, 상태: completed·draft)
+```
+
 ## 실행
 
 ```bash
