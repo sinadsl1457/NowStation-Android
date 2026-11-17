@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.nowstation.app.BuildConfig
 import com.nowstation.app.core.ui.lineColor
 import com.nowstation.app.station.domain.Station
 
@@ -50,7 +51,17 @@ fun HomeScreen(
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.safeDrawingPadding().imePadding().padding(horizontal = 20.dp)) {
             Spacer(Modifier.height(24.dp))
-            Text("지금역", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text("지금역", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.width(8.dp))
+                // 설치된 버전을 바로 보이게: 테스트 트랙에서 새 빌드가 들어왔는지 폰에서 확인
+                Text(
+                    "v${BuildConfig.VERSION_NAME}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 6.dp),
+                )
+            }
             Text(
                 "타는 역을 고르고 시작하면, 탄 열차를 찾아 잠금화면에 현재역을 보여 줘요",
                 style = MaterialTheme.typography.bodyMedium,
