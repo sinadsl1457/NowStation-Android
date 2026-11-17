@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nowstation.app.core.ui.lineColor
 import com.nowstation.app.station.domain.Station
@@ -83,7 +84,15 @@ fun HomeScreen(
                 enabled = state.canStart,
                 modifier = Modifier.fillMaxWidth().height(56.dp).padding(bottom = 4.dp),
             ) { Text(if (state.isStarting) "시작하는 중…" else "시작", style = MaterialTheme.typography.titleMedium) }
-            Spacer(Modifier.height(12.dp))
+            // 공공데이터 이용 조건: 출처 표시
+            Text(
+                "열차 위치: 서울특별시 열린데이터광장 실시간 지하철 정보",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(8.dp))
         }
     }
 }
