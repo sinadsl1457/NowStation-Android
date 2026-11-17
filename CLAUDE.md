@@ -13,7 +13,7 @@
 
 ## 구조 — 기능 폴더는 "상태를 누가 갖고 언제 사라지나"로 나눈다
 ```
-com.nowstation.app
+com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는 com.taektoy.nowstation)
 ├ core/      결과·오류 타입(AppResult, safeApiCall), 네트워크(Retrofit), 테마, 저장소 연결(Hilt)
 ├ station/   역 검색 + 홈 화면. 상태는 홈 화면 ViewModel이 갖고 화면과 함께 사라진다
 └ ride/      진행 중인 탑승. 화면이 사라져도 계속돼야 해서 @Singleton RideTracker가 갖는다

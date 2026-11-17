@@ -37,7 +37,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.nowstation.app"
+        applicationId = "com.taektoy.nowstation" // 스토어 이름. 코드 패키지(namespace)와 따로: com.nowstation.app은 다른 개발자가 선점
         minSdk = 26
         targetSdk = 36
         versionCode = 1

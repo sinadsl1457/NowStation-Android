@@ -6,7 +6,7 @@
 - 앱 이름: `지금역`
 - 기본 언어: 한국어
 - 앱 / 게임: 앱, 무료
-- 패키지 이름: `com.nowstation.app` (업로드하는 .aab에 들어 있음)
+- 패키지 이름: `com.taektoy.nowstation` (업로드하는 .aab에 들어 있음. `com.nowstation.app`은 이미 다른 개발자가 등록해 바꿈)
 
 ## 2. 스토어 등록정보
 
