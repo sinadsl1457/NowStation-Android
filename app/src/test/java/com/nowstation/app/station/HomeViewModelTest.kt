@@ -6,7 +6,9 @@ import com.nowstation.app.ride.domain.RideTracker
 import com.nowstation.app.station.domain.Station
 import com.nowstation.app.station.ui.HomeViewModel
 import com.nowstation.app.station.ui.PickTarget
+import com.nowstation.app.station.domain.RecentRoute
 import com.nowstation.app.testutil.FakeLauncher
+import com.nowstation.app.testutil.FakeRecentRouteStore
 import com.nowstation.app.testutil.FakeRideRepository
 import com.nowstation.app.testutil.FakeStationRepository
 import com.nowstation.app.testutil.MainDispatcherRule
@@ -26,7 +28,8 @@ class HomeViewModelTest {
     private val stations = FakeStationRepository(listOf(Station("태평", listOf("수인분당선")), Station("강남", listOf("2호선", "신분당선"))))
     private val rides = FakeRideRepository()
     private val launcher = FakeLauncher()
-    private val vm by lazy { HomeViewModel(stations, RideTracker(rides, Clock.systemUTC()), launcher) }
+    private val recent = FakeRecentRouteStore()
+    private val vm by lazy { HomeViewModel(stations, RideTracker(rides, Clock.systemUTC()), launcher, recent) }
 
     @Test
     fun `입력이 멈추면 한 번만 찾는다`() = runTest(main.dispatcher) {
@@ -82,5 +85,36 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, vm.state.value.results.size)
+    }
+
+    @Test
+    fun `시작에 성공한 경로만 최근 경로 맨 앞에 저장한다`() = runTest(main.dispatcher) {
+        recent.routes = listOf(RecentRoute(stations.stations[1], null))
+        advanceUntilIdle()
+        vm.pick(stations.stations[0])
+        vm.start()
+        advanceUntilIdle()
+
+        assertEquals(listOf("태평", "강남"), recent.routes.map { it.origin.name })
+        assertEquals(listOf("태평", "강남"), vm.state.value.recent.map { it.origin.name })
+
+        rides.startResult = AppResult.Error(AppError.Network)
+        vm.pick(stations.stations[1])
+        vm.start()
+        advanceUntilIdle()
+        assertEquals(listOf("태평", "강남"), recent.routes.map { it.origin.name })
+    }
+
+    @Test
+    fun `최근 경로를 누르면 그 역들로 바로 시작한다`() = runTest(main.dispatcher) {
+        val route = RecentRoute(stations.stations[0], stations.stations[1])
+        recent.routes = listOf(route)
+        advanceUntilIdle()
+
+        vm.startRecent(vm.state.value.recent[0])
+        advanceUntilIdle()
+
+        assertEquals(1, launcher.started)
+        assertEquals("태평" to "강남", rides.lastStart)
     }
 }

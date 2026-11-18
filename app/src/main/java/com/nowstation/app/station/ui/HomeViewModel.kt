@@ -6,6 +6,8 @@ import com.nowstation.app.core.result.AppError
 import com.nowstation.app.core.result.AppResult
 import com.nowstation.app.ride.domain.RideTracker
 import com.nowstation.app.ride.service.RideServiceLauncher
+import com.nowstation.app.station.domain.RecentRoute
+import com.nowstation.app.station.domain.RecentRouteStore
 import com.nowstation.app.station.domain.Station
 import com.nowstation.app.station.domain.StationRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +29,7 @@ data class HomeUiState(
     val results: List<Station> = emptyList(),
     val origin: Station? = null,
     val destination: Station? = null,
+    val recent: List<RecentRoute> = emptyList(),
     val isStarting: Boolean = false,
     val message: String? = null,
 ) {
@@ -39,6 +42,7 @@ class HomeViewModel @Inject constructor(
     private val stations: StationRepository,
     private val tracker: RideTracker,
     private val launcher: RideServiceLauncher,
+    private val recentStore: RecentRouteStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HomeUiState())
@@ -47,6 +51,7 @@ class HomeViewModel @Inject constructor(
     private var searchJob: Job? = null
 
     init {
+        _state.update { it.copy(recent = recentStore.load()) }
         search("")
     }
 
@@ -80,6 +85,13 @@ class HomeViewModel @Inject constructor(
 
     fun dismissMessage() = _state.update { it.copy(message = null) }
 
+    /** 최근 경로를 눌러 바로 시작. */
+    fun startRecent(route: RecentRoute) {
+        if (_state.value.isStarting) return
+        _state.update { it.copy(origin = route.origin, destination = route.destination) }
+        start()
+    }
+
     fun start() {
         val current = _state.value
         val origin = current.origin ?: return
@@ -89,8 +101,10 @@ class HomeViewModel @Inject constructor(
             when (val result = tracker.start(origin.name, current.destination?.name)) {
                 is AppResult.Success -> {
                     launcher.start()
+                    val recent = RecentRoute.push(current.recent, RecentRoute(origin, current.destination))
+                    recentStore.save(recent)
                     // 탑승을 끝내고 홈으로 돌아왔을 때 빈 목록이 보이지 않게 다시 채운다
-                    _state.update { HomeUiState() }
+                    _state.update { HomeUiState(recent = recent) }
                     search("")
                 }
                 is AppResult.Error -> _state.update { it.copy(isStarting = false, message = messageOf(result.error)) }

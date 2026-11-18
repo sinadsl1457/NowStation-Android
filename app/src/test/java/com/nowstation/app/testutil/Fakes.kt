@@ -6,6 +6,8 @@ import com.nowstation.app.ride.domain.RideRepository
 import com.nowstation.app.ride.domain.RideStatus
 import com.nowstation.app.ride.domain.RideView
 import com.nowstation.app.ride.service.RideServiceLauncher
+import com.nowstation.app.station.domain.RecentRoute
+import com.nowstation.app.station.domain.RecentRouteStore
 import com.nowstation.app.station.domain.Station
 import com.nowstation.app.station.domain.StationRepository
 import java.time.Instant
@@ -21,7 +23,12 @@ class FakeRideRepository : RideRepository {
     val sentMotions = mutableListOf<Pair<List<Motion>, Instant>>()
     val ended = mutableListOf<String>()
 
-    override suspend fun start(origin: String, destination: String?) = startResult
+    var lastStart: Pair<String, String?>? = null
+
+    override suspend fun start(origin: String, destination: String?): AppResult<RideView> {
+        lastStart = origin to destination
+        return startResult
+    }
     override suspend fun get(rideId: String) = getResult
     override suspend fun sendMotion(rideId: String, motions: List<Motion>, sentAt: Instant): AppResult<RideView> {
         sentMotions += motions to sentAt
@@ -44,4 +51,9 @@ class FakeStationRepository(var stations: List<Station> = emptyList()) : Station
 class FakeLauncher : RideServiceLauncher {
     var started = 0
     override fun start() { started++ }
+}
+
+class FakeRecentRouteStore(var routes: List<RecentRoute> = emptyList()) : RecentRouteStore {
+    override fun load() = routes
+    override fun save(routes: List<RecentRoute>) { this.routes = routes }
 }
