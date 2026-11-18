@@ -45,4 +45,11 @@ class RideTextsTest {
         assertEquals("한티", RideTexts.chip(ride(view(RideStatus.HOLDING_BETWEEN, "한티", "선릉"))))
         assertEquals(null, RideTexts.chip(ride(view(RideStatus.STALE, "역삼"))))
     }
+
+    @Test
+    fun `상태 표시는 연결 끊김이 먼저`() {
+        assertEquals("달리는 중", RideTexts.status(ride(view(RideStatus.MOVING, "역삼", "강남"))))
+        assertEquals("역 사이 정차", RideTexts.status(ride(view(RideStatus.HOLDING_BETWEEN, "역삼", "강남"))))
+        assertEquals("연결 끊김", RideTexts.status(ride(view(RideStatus.MOVING, "역삼", "강남"), online = false)))
+    }
 }

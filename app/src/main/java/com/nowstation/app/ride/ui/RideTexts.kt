@@ -41,4 +41,16 @@ object RideTexts {
         }
         return if (ride.online) main else "$main · 연결 끊김(다시 시도 중)"
     }
+
+    /** 탑승 화면 위쪽 상태 표시. 연결이 끊기면 그게 먼저다(보이는 역이 오래된 것일 수 있음). */
+    fun status(ride: ActiveRide): String {
+        if (!ride.online) return "연결 끊김"
+        return when (ride.view.status) {
+            RideStatus.WAITING -> "기다리는 중"
+            RideStatus.AT_STATION -> "정차 중"
+            RideStatus.MOVING -> "달리는 중"
+            RideStatus.HOLDING_BETWEEN -> "역 사이 정차"
+            RideStatus.STALE, RideStatus.UNKNOWN -> "위치 확인 중"
+        }
+    }
 }

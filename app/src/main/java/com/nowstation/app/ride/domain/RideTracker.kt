@@ -25,6 +25,8 @@ data class ActiveRide(
     val updatedAt: Instant,
     /** 아직 서버에 못 보낸 움직임 수(지하에서 끊김). */
     val unsentMotions: Int = 0,
+    /** 탑승을 시작한 시각(화면에 "08:42 탑승"). */
+    val startedAt: Instant? = null,
 ) {
     companion object {
         /** 내릴 역 알림이 막 켜졌나. 환승 뒤 다시 켜지면 또 울린다. */
@@ -64,7 +66,8 @@ class RideTracker @Inject constructor(
         val result = repository.start(origin, destination)
         if (result is AppResult.Success) {
             pending.value = emptyList()
-            _state.value = ActiveRide(origin, destination, result.data, online = true, updatedAt = Instant.now(clock))
+            val now = Instant.now(clock)
+            _state.value = ActiveRide(origin, destination, result.data, online = true, updatedAt = now, startedAt = now)
         }
         return result
     }
