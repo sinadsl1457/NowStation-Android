@@ -82,3 +82,14 @@ fun LineChip(line: String, modifier: Modifier = Modifier, onDark: Boolean = fals
 fun LineDot(line: String, size: Int = 8) {
     Box(Modifier.size(size.dp).background(lineColor(line), CircleShape))
 }
+
+/** 화면 맨 위 시계·배터리 아이콘 색. [dark] = 검은 아이콘(밝은 바탕), false = 흰 아이콘(파란 바탕). */
+@Composable
+fun StatusBarIcons(dark: Boolean) {
+    val view = androidx.compose.ui.platform.LocalView.current
+    if (view.isInEditMode) return
+    androidx.compose.runtime.SideEffect {
+        val window = (view.context as android.app.Activity).window
+        androidx.core.view.WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = dark
+    }
+}

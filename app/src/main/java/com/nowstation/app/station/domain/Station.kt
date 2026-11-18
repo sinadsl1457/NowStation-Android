@@ -7,4 +7,5 @@ data class Station(val name: String, val lines: List<String>)
 
 interface StationRepository {
     suspend fun search(query: String): AppResult<List<Station>>
+    suspend fun lines(): AppResult<List<String>>
 }

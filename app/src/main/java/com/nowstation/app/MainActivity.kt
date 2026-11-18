@@ -10,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nowstation.app.core.ui.NowStationTheme
@@ -17,6 +18,7 @@ import com.nowstation.app.ride.domain.RideNotice
 import com.nowstation.app.ride.domain.RideTracker
 import com.nowstation.app.ride.ui.RideScreen
 import com.nowstation.app.ride.ui.RideViewModel
+import com.nowstation.app.station.ui.HomeActions
 import com.nowstation.app.station.ui.HomeScreen
 import com.nowstation.app.station.ui.HomeViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -59,7 +61,10 @@ class MainActivity : ComponentActivity() {
                             vm.dismissMessage()
                         }
                     }
-                    HomeScreen(state, vm::onQueryChange, vm::pick, vm::edit, vm::clearDestination, vm::start)
+                    val actions = remember(vm) {
+                        HomeActions(vm::onQueryChange, vm::pick, vm::edit, vm::clearDestination, vm::start, vm::startRecent, vm::closeSearch)
+                    }
+                    HomeScreen(state, actions)
                 }
             }
         }

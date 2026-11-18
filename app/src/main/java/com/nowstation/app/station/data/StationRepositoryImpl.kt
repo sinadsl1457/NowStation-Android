@@ -9,4 +9,6 @@ import javax.inject.Inject
 class StationRepositoryImpl @Inject constructor(private val api: StationApi) : StationRepository {
     override suspend fun search(query: String): AppResult<List<Station>> =
         safeApiCall { api.search(query).map { Station(it.name, it.lines) } }
+
+    override suspend fun lines(): AppResult<List<String>> = safeApiCall { api.lines() }
 }

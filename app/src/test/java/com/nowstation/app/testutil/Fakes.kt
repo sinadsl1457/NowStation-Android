@@ -46,6 +46,8 @@ class FakeStationRepository(var stations: List<Station> = emptyList()) : Station
         queries += query
         return AppResult.Success(stations.filter { query.isEmpty() || it.name.contains(query) })
     }
+    var linesResult: AppResult<List<String>> = AppResult.Success(listOf("2호선", "수인분당선", "신분당선"))
+    override suspend fun lines() = linesResult
 }
 
 class FakeLauncher : RideServiceLauncher {

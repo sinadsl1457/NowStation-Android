@@ -24,6 +24,7 @@ import com.nowstation.app.core.ui.LineChip
 @Composable
 fun RideScreen(ride: ActiveRide, onEnd: () -> Unit) {
     val v = ride.view
+    com.nowstation.app.core.ui.StatusBarIcons(dark = true)
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.safeDrawingPadding().padding(24.dp)) {
             v.line?.let { LineChip(it) }

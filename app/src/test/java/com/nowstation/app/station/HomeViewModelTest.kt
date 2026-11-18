@@ -42,13 +42,32 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `타는 역을 고르면 내릴 역 고르기로 넘어간다`() = runTest(main.dispatcher) {
+    fun `칸을 누르면 검색이 열리고, 역을 고르면 닫혀 홈으로 돌아간다`() = runTest(main.dispatcher) {
         advanceUntilIdle()
+        vm.edit(PickTarget.ORIGIN)
+        assertTrue(vm.state.value.searching)
+
         vm.pick(stations.stations[0])
 
         assertEquals("태평", vm.state.value.origin?.name)
-        assertEquals(PickTarget.DESTINATION, vm.state.value.target)
+        assertEquals(false, vm.state.value.searching)
         assertTrue(vm.state.value.canStart)
+    }
+
+    @Test
+    fun `지원 노선을 받아 온다`() = runTest(main.dispatcher) {
+        vm // 만들어질 때 받아 온다
+        advanceUntilIdle()
+        assertEquals(listOf("2호선", "수인분당선", "신분당선"), vm.state.value.lines)
+    }
+
+    @Test
+    fun `지원 노선을 못 받아도 오류를 띄우지 않는다`() = runTest(main.dispatcher) {
+        stations.linesResult = AppResult.Error(AppError.Network)
+        vm
+        advanceUntilIdle()
+        assertEquals(emptyList<String>(), vm.state.value.lines)
+        assertNull(vm.state.value.message)
     }
 
     @Test
