@@ -36,7 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nowstation.app.BuildConfig
-import com.nowstation.app.core.ui.lineColor
+import com.nowstation.app.core.ui.LineChip
 import com.nowstation.app.station.domain.Station
 
 @Composable
@@ -138,14 +138,4 @@ private fun StationRow(station: Station, onClick: () -> Unit) {
             station.lines.forEach { LineChip(it) }
         }
     }
-}
-
-@Composable
-fun LineChip(line: String) {
-    Text(
-        line,
-        style = MaterialTheme.typography.labelMedium,
-        color = Color.White,
-        modifier = Modifier.background(lineColor(line), RoundedCornerShape(50)).padding(horizontal = 8.dp, vertical = 2.dp),
-    )
 }

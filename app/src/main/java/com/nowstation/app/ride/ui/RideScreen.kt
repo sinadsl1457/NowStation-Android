@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nowstation.app.ride.domain.ActiveRide
 import com.nowstation.app.ride.domain.RideStatus
-import com.nowstation.app.station.ui.LineChip
+import com.nowstation.app.core.ui.LineChip
 
 /** 탑승 중: 이번 역을 아주 크게(흔들리는 열차에서 한눈에), 다음 역과 상태는 그 아래. */
 @Composable
