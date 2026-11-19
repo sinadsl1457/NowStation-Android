@@ -11,7 +11,9 @@ object RideTexts {
     fun title(ride: ActiveRide): String {
         val v = ride.view
         return when {
-            v.prepareToAlight && v.thisStation != null -> if (isTransfer(ride)) "곧 ${v.thisStation}, 갈아탈 준비하세요" else "곧 ${v.thisStation}, 내릴 준비하세요"
+            v.status == RideStatus.ARRIVED -> "${v.thisStation} 도착"
+            // 한 정거장 전부터 켜지므로 이번 역이 아니라 구간 끝(내릴·갈아탈 역) 이름으로
+            v.prepareToAlight && (v.target ?: v.thisStation) != null -> (v.target ?: v.thisStation).let { if (isTransfer(ride)) "곧 $it, 갈아탈 준비하세요" else "곧 $it, 내릴 준비하세요" }
             v.status == RideStatus.WAITING -> "${v.thisStation ?: ride.origin}역에서 기다리는 중"
             v.status == RideStatus.STALE || v.thisStation == null -> "위치 확인 중"
             else -> "이번 역 ${v.thisStation}"
@@ -27,6 +29,7 @@ object RideTexts {
         return when (v.status) {
             RideStatus.WAITING -> "대기"
             RideStatus.AT_STATION, RideStatus.MOVING, RideStatus.HOLDING_BETWEEN -> v.thisStation
+            RideStatus.ARRIVED -> "도착"
             RideStatus.STALE, RideStatus.UNKNOWN -> null
         }
     }
@@ -39,6 +42,7 @@ object RideTexts {
             RideStatus.MOVING -> v.nextStation?.let { "다음 역 $it" } ?: "종점 방면"
             RideStatus.HOLDING_BETWEEN -> "역 사이에서 잠시 정차 중"
             RideStatus.STALE -> v.thisStation?.let { "마지막으로 확인한 역 $it" } ?: "열차 소식을 기다리는 중"
+            RideStatus.ARRIVED -> "도착했어요"
             RideStatus.UNKNOWN -> "상태를 확인하는 중"
         }
         return if (ride.online) main else "$main · 연결 끊김(다시 시도 중)"
@@ -52,6 +56,7 @@ object RideTexts {
             RideStatus.AT_STATION -> "정차 중"
             RideStatus.MOVING -> "달리는 중"
             RideStatus.HOLDING_BETWEEN -> "역 사이 정차"
+            RideStatus.ARRIVED -> "도착"
             RideStatus.STALE, RideStatus.UNKNOWN -> "위치 확인 중"
         }
     }
@@ -61,6 +66,14 @@ object RideTexts {
         val target = ride.view.target ?: return null
         val n = ride.view.remainingStops ?: return null
         return if (n == 0) "이번 역이 ${target}이에요" else "${target}까지 ${n}정거장"
+    }
+
+    /** 노선도 위 열차의 그 역에서의 상태: 공공 데이터 그대로라 위쪽 "이번 정거장"(다가오는 역)과 헷갈리지 않게 적는다. */
+    fun trainState(t: StripTrain): String? = when (t.status) {
+        "ENTERING" -> "진입"
+        "ARRIVED" -> "도착"
+        "DEPARTED" -> "출발"
+        else -> null
     }
 
     /** 노선도 위 열차 이름표: "왕십리행". */

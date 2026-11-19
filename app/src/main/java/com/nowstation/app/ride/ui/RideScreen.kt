@@ -97,7 +97,8 @@ fun RideScreen(
     var confirming by rememberSaveable { mutableStateOf(false) }
     val askEnd = { confirming = true }
     AnimatedContent(
-        targetState = ride.view.prepareToAlight,
+        // 파란 전체 화면은 최종 내릴 역에서만. 환승역은 알림·진동과 안내 띠로(사용자 결정)
+        targetState = ride.view.prepareToAlight && !RideTexts.isTransfer(ride),
         transitionSpec = { (slideInVertically(tween(450)) { it / 3 } + fadeIn(tween(300))) togetherWith fadeOut(tween(200)) },
         label = "alight",
     ) { alight ->
@@ -148,7 +149,7 @@ private fun RidingContent(ride: ActiveRide, strip: TrainStrip?, picking: String?
             Text(RideTexts.remaining(ride) ?: RideTexts.detail(ride), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFF2A3348))
         }
 
-        if (v.legs.isNotEmpty()) LegChips(v.legs, v.line)
+        if (v.legs.any { it.stations.isNotEmpty() }) RouteBar(v.legs, v.thisStation, v.line)
         if (strip != null) StripCard(strip, picking, onPick) else RouteCard(ride)
 
         Spacer(Modifier.weight(1f))
@@ -234,19 +235,21 @@ private fun AlightContent(ride: ActiveRide, onEnd: () -> Unit) {
         ) {
             Ripple()
             Spacer(Modifier.height(18.dp))
-            Text(if (RideTexts.isTransfer(ride)) "갈아탈 준비하세요" else "내릴 준비하세요", fontSize = 30.sp, fontWeight = FontWeight.Black, color = Color.White)
-            Spacer(Modifier.height(10.dp))
-            Text("이번 역", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.85f))
+            val arrived = v.status == RideStatus.ARRIVED
+            val target = v.target ?: v.thisStation
             Text(
-                v.thisStation ?: "",
+                if (arrived) "도착했어요" else if (RideTexts.isTransfer(ride)) "갈아탈 준비하세요" else "내릴 준비하세요",
+                fontSize = 30.sp, fontWeight = FontWeight.Black, color = Color.White,
+            )
+            Spacer(Modifier.height(10.dp))
+            // 한 정거장 전부터 켜진다: 아직 전 역이면 "다음 역"
+            Text(if (arrived || v.thisStation == target) "이번 역" else "다음 역", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.85f))
+            Text(
+                target ?: "",
                 fontSize = 76.sp, lineHeight = 88.sp, fontWeight = FontWeight.Black, color = Color.White,
                 modifier = Modifier.scale(grow.value),
             )
             Text(if (RideTexts.isTransfer(ride)) "여기서 갈아타세요" else "내리실 역이에요", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.9f))
-            v.nextStation?.let {
-                Spacer(Modifier.height(20.dp))
-                Text("다음 역 $it", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
-            }
             if (!ride.online) {
                 // 연결이 끊기면 보이는 역이 오래된 것일 수 있다(갈아탈·내릴 준비 화면에서도). iOS와 같은 문구
                 Spacer(Modifier.height(10.dp))
@@ -320,21 +323,60 @@ private fun Banner(ride: ActiveRide) {
     )
 }
 
-/** 경로 구간: "태평 ▶ 선릉" "선릉 ▶ 강남". 지금 구간을 칠한다. */
+/**
+ * 전체 경로 막대: 출발부터 도착까지 실제로 지나는 역만 한 줄로, 구간마다 노선 색. 환승역에는 두 노선 배지.
+ * 환승해도 막대는 그대로라 화면이 갑자기 바뀌지 않는다(사용자 피드백: 선릉에서 갑자기 2호선 노선도로 바뀌어 헷갈림).
+ */
 @Composable
-private fun LegChips(legs: List<RideLeg>, current: String?) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        legs.forEach { leg ->
-            val on = leg.line == current
-            val c = lineColor(leg.line)
-            Row(
-                Modifier.background(if (on) c else Color.White, CircleShape).border(1.5.dp, if (on) Color.Transparent else c, CircleShape)
-                    .padding(horizontal = 10.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                LineBadge(leg.line, size = 18.dp)
-                Spacer(Modifier.width(4.dp))
-                Text("${leg.from} ▶ ${leg.to}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (on) Color.White else Ink)
+private fun RouteBar(legs: List<RideLeg>, here: String?, currentLine: String?) {
+    // (역, 들어오는 구간 노선, 나가는 구간 노선)
+    data class Stop(val name: String, val inLine: String?, val outLine: String?)
+    val stops = buildList<Stop> {
+        legs.forEachIndexed { li, leg ->
+            leg.stations.forEachIndexed { si, name ->
+                if (li > 0 && si == 0) {
+                    val last = removeAt(lastIndex)
+                    add(last.copy(outLine = leg.line))
+                } else {
+                    add(Stop(name, if (si == 0) null else leg.line, if (si == leg.stations.lastIndex) null else leg.line))
+                }
+            }
+        }
+    }
+    // 지금 위치: 지금 노선 구간 안에서 이번 역(환승역 이름은 두 구간에 있어 노선으로 가린다)
+    val hereIndex = stops.indexOfFirst { it.name == here && (it.inLine == currentLine || it.outLine == currentLine) }
+    val listState = rememberLazyListState()
+    LaunchedEffect(hereIndex) { if (hereIndex >= 0) listState.scrollToItem((hereIndex - 2).coerceAtLeast(0)) }
+    Column(Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(24.dp)).padding(vertical = 14.dp)) {
+        Text("${stops.first().name} → ${stops.last().name}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Muted, modifier = Modifier.padding(horizontal = 16.dp))
+        Spacer(Modifier.height(8.dp))
+        LazyRow(state = listState, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp)) {
+            itemsIndexed(stops) { i, stop ->
+                val transfer = stop.inLine != null && stop.outLine != null && stop.inLine != stop.outLine
+                val isHere = i == hereIndex
+                Column(Modifier.width(64.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(Modifier.fillMaxWidth().height(22.dp), contentAlignment = Alignment.Center) {
+                        Row(Modifier.fillMaxWidth()) {
+                            Box(Modifier.weight(1f).height(5.dp).background(stop.inLine?.let { lineColor(it) } ?: Color.Transparent))
+                            Box(Modifier.weight(1f).height(5.dp).background(stop.outLine?.let { lineColor(it) } ?: Color.Transparent))
+                        }
+                        val c = lineColor(stop.outLine ?: stop.inLine)
+                        Box(
+                            Modifier.size(if (isHere) 20.dp else if (transfer) 16.dp else 11.dp)
+                                .background(if (isHere) c else Color.White, CircleShape)
+                                .border(3.dp, if (transfer) Ink else c, CircleShape),
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(stop.name, fontSize = 12.sp, maxLines = 1,
+                        fontWeight = if (isHere || transfer) FontWeight.ExtraBold else FontWeight.Normal,
+                        color = if (isHere) lineColor(currentLine) else Ink)
+                    if (transfer) Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                        LineBadge(stop.inLine!!, size = 20.dp)
+                        LineBadge(stop.outLine!!, size = 20.dp)
+                    }
+                    if (isHere) Text("지금", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = lineColor(currentLine))
+                }
             }
         }
     }
@@ -353,13 +395,14 @@ private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) 
             Spacer(Modifier.weight(1f))
             strip.trains.minOfOrNull { it.seenSecondsAgo }?.let { Text("${it}초 전 기준", fontSize = 12.sp, color = Muted) }
         }
+        if (strip.boardIndex > 0) Text("회색 역: 열차가 ${strip.leg.from}(으)로 들어오는 쪽", fontSize = 11.sp, color = Muted)
         Spacer(Modifier.height(10.dp))
         // 열차가 있는 칸과 없는 칸의 역 줄이 같은 높이에 오게 아래로 맞춘다
         LazyRow(state = listState, verticalAlignment = Alignment.Bottom) {
             itemsIndexed(strip.stations) { i, name ->
                 val board = i == strip.boardIndex
                 Column(Modifier.width(76.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Column(Modifier.height(80.dp), verticalArrangement = Arrangement.Bottom) {
+                    Column(Modifier.height(104.dp), verticalArrangement = Arrangement.Bottom) {
                         strip.trains.filter { it.station == name }.forEach { t ->
                             Column(
                                 Modifier.width(66.dp)
@@ -372,6 +415,7 @@ private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) 
                             ) {
                                 val fg = if (t.selected) Color.White else Ink
                                 Text(RideTexts.terminal(t), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = fg)
+                                RideTexts.trainState(t)?.let { Text(it, fontSize = 10.sp, color = fg.copy(alpha = 0.8f)) }
                                 if (picking == t.trainNo) CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = fg)
                                 else Text(t.trainNo, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = fg)
                                 Text("🚆", fontSize = 12.sp)
@@ -380,10 +424,12 @@ private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) 
                         }
                     }
                     Box(Modifier.fillMaxWidth().height(18.dp), contentAlignment = Alignment.Center) {
-                        Box(Modifier.fillMaxWidth().height(3.dp).background(Color(0xFFC9D1E0)))
+                        Box(Modifier.fillMaxWidth().height(3.dp).background(if (i >= strip.boardIndex) c else Color(0xFFC9D1E0)))
                         Box(Modifier.size(if (board) 16.dp else 10.dp).background(if (board) c else Color(0xFFC9D1E0), CircleShape))
                     }
-                    Text(name, fontSize = 13.sp, fontWeight = if (board) FontWeight.ExtraBold else FontWeight.Normal, color = if (board) c else Ink, maxLines = 1)
+                    // 타는 역 앞쪽(들어오는 열차가 오는 쪽)은 내 경로가 아니라 흐리게
+                    Text(name, fontSize = 13.sp, fontWeight = if (board) FontWeight.ExtraBold else FontWeight.Normal,
+                        color = if (board) c else if (i < strip.boardIndex) Color(0xFFA8B0BF) else Ink, maxLines = 1)
                 }
             }
         }

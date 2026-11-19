@@ -21,7 +21,8 @@ data class RideView(
     val notice: RideNoticeKind? = null,
 )
 
-data class RideLeg(val line: String, val from: String, val to: String)
+/** [stations]: 지나는 역(양 끝 포함). 전체 경로 막대에 쓴다(노선도 응답의 구간에는 비어 있음). */
+data class RideLeg(val line: String, val from: String, val to: String, val stations: List<String> = emptyList())
 
 /** TRANSFER: 환승역에 도착(다음 구간 열차를 골라 둠). */
 enum class RideNoticeKind { TRANSFER }
@@ -35,6 +36,8 @@ enum class RideStatus {
     HOLDING_BETWEEN,
     /** 탄 열차 소식이 2분 넘게 없음 */
     STALE,
+    /** 내릴 역에 도착(더 따라가지 않음) */
+    ARRIVED,
     UNKNOWN,
 }
 

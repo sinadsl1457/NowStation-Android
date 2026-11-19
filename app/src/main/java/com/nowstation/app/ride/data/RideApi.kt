@@ -40,7 +40,7 @@ data class MotionRequest(val events: List<MotionItem>, val sentAt: String)
 data class MotionItem(val kind: String, val at: String)
 
 @Serializable
-data class LegDto(val line: String, val from: String, val to: String)
+data class LegDto(val line: String, val from: String, val to: String, val stations: List<String> = emptyList())
 
 @Serializable
 data class TrainStripDto(val leg: LegDto, val stations: List<String>, val boardIndex: Int, val trains: List<StripTrainDto>)
