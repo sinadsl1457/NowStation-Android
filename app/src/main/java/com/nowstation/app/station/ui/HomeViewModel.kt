@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** 지금 고르는 칸: 출발역(필수) 또는 내릴 역(선택). */
+/** 지금 고르는 칸: 타는 역 또는 내릴 역(둘 다 골라야 시작). */
 enum class PickTarget { ORIGIN, DESTINATION }
 
 data class HomeUiState(
@@ -39,7 +39,8 @@ data class HomeUiState(
 ) {
     /** 같은 역을 두 칸에 고름(바꾸기·다시 고르다 생김). 시작하지 않고 카드에 알린다. */
     val sameStation: Boolean get() = origin != null && origin.name == destination?.name
-    val canStart: Boolean get() = origin != null && !isStarting && !sameStation
+    /** 내릴 역도 필수(사용자 결정: 내릴 역 알림이 이 앱의 목적). */
+    val canStart: Boolean get() = origin != null && destination != null && !isStarting && !sameStation
     val canSwap: Boolean get() = (origin != null || destination != null) && !isStarting
 }
 
@@ -105,7 +106,8 @@ class HomeViewModel @Inject constructor(
     fun startRecent(route: RecentRoute) {
         if (_state.value.isStarting) return
         _state.update { it.copy(origin = route.origin, destination = route.destination) }
-        start()
+        // 내릴 역이 선택이던 때 저장된 경로: 내릴 역부터 고르게 한다
+        if (route.destination == null) edit(PickTarget.DESTINATION) else start()
     }
 
     fun start() {

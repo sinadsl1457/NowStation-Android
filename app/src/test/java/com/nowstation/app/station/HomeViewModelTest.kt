@@ -31,6 +31,13 @@ class HomeViewModelTest {
     private val recent = FakeRecentRouteStore()
     private val vm by lazy { HomeViewModel(stations, RideTracker(rides, Clock.systemUTC()), launcher, recent) }
 
+    private fun pickRoute(origin: Station, destination: Station) {
+        vm.edit(PickTarget.ORIGIN)
+        vm.pick(origin)
+        vm.edit(PickTarget.DESTINATION)
+        vm.pick(destination)
+    }
+
     @Test
     fun `입력이 멈추면 한 번만 찾는다`() = runTest(main.dispatcher) {
         vm.onQueryChange("태")
@@ -51,6 +58,10 @@ class HomeViewModelTest {
 
         assertEquals("태평", vm.state.value.origin?.name)
         assertEquals(false, vm.state.value.searching)
+        assertEquals("내릴 역도 골라야 시작", false, vm.state.value.canStart)
+
+        vm.edit(PickTarget.DESTINATION)
+        vm.pick(stations.stations[1])
         assertTrue(vm.state.value.canStart)
     }
 
@@ -67,6 +78,32 @@ class HomeViewModelTest {
 
         assertEquals("강남", vm.state.value.origin?.name)
         assertEquals("태평", vm.state.value.destination?.name)
+    }
+
+    @Test
+    fun `내릴 역을 고르지 않으면 시작할 수 없다`() = runTest(main.dispatcher) {
+        advanceUntilIdle()
+        vm.edit(PickTarget.ORIGIN)
+        vm.pick(stations.stations[0])
+
+        assertEquals(false, vm.state.value.canStart)
+        vm.start()
+        advanceUntilIdle()
+        assertEquals(null, rides.lastStart)
+    }
+
+    @Test
+    fun `내릴 역 없이 저장된 옛 최근 경로를 누르면 내릴 역 고르기를 연다`() = runTest(main.dispatcher) {
+        recent.routes = listOf(RecentRoute(stations.stations[0], null))
+        advanceUntilIdle()
+
+        vm.startRecent(vm.state.value.recent[0])
+        advanceUntilIdle()
+
+        assertEquals(null, rides.lastStart)
+        assertEquals("태평", vm.state.value.origin?.name)
+        assertTrue(vm.state.value.searching)
+        assertEquals(PickTarget.DESTINATION, vm.state.value.target)
     }
 
     @Test
@@ -95,7 +132,7 @@ class HomeViewModelTest {
 
         assertEquals("강남", vm.state.value.origin?.name)
         assertEquals(null, vm.state.value.destination)
-        assertTrue(vm.state.value.canStart)
+        assertEquals(false, vm.state.value.canStart)
     }
 
     @Test
@@ -117,7 +154,7 @@ class HomeViewModelTest {
     @Test
     fun `시작에 성공하면 서비스를 띄우고 홈을 비운다`() = runTest(main.dispatcher) {
         advanceUntilIdle()
-        vm.pick(stations.stations[0])
+        pickRoute(stations.stations[0], stations.stations[1])
 
         vm.start()
         advanceUntilIdle()
@@ -130,7 +167,7 @@ class HomeViewModelTest {
     fun `시작에 실패하면 서버가 준 이유를 보여 준다`() = runTest(main.dispatcher) {
         rides.startResult = AppResult.Error(AppError.BadRequest("모르는 역: 태평"))
         advanceUntilIdle()
-        vm.pick(stations.stations[0])
+        pickRoute(stations.stations[0], stations.stations[1])
 
         vm.start()
         advanceUntilIdle()
@@ -142,7 +179,7 @@ class HomeViewModelTest {
     @Test
     fun `탑승을 시작해 홈을 비워도 역 목록은 다시 보여 준다(탑승을 끝내고 돌아왔을 때)`() = runTest(main.dispatcher) {
         advanceUntilIdle()
-        vm.pick(stations.stations[0])
+        pickRoute(stations.stations[0], stations.stations[1])
 
         vm.start()
         advanceUntilIdle()
@@ -154,7 +191,7 @@ class HomeViewModelTest {
     fun `시작에 성공한 경로만 최근 경로 맨 앞에 저장한다`() = runTest(main.dispatcher) {
         recent.routes = listOf(RecentRoute(stations.stations[1], null))
         advanceUntilIdle()
-        vm.pick(stations.stations[0])
+        pickRoute(stations.stations[0], stations.stations[1])
         vm.start()
         advanceUntilIdle()
 
@@ -162,7 +199,7 @@ class HomeViewModelTest {
         assertEquals(listOf("태평", "강남"), vm.state.value.recent.map { it.origin.name })
 
         rides.startResult = AppResult.Error(AppError.Network)
-        vm.pick(stations.stations[1])
+        pickRoute(stations.stations[1], stations.stations[0])
         vm.start()
         advanceUntilIdle()
         assertEquals(listOf("태평", "강남"), recent.routes.map { it.origin.name })

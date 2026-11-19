@@ -87,7 +87,7 @@ fun LineChip(line: String, modifier: Modifier = Modifier, onDark: Boolean = fals
 
 /**
  * 한 역의 노선 칩들. [maxWidth]와 받은 자리 안에 다 들어가면 칩으로, 아니면 노선 색 점만 보여 준다.
- * 역 이름·"내릴 역 (선택)" 글자가 칩에 밀려 두 줄로 깨지지 않게(iOS LineChips와 같은 규칙).
+ * 역 이름·"내릴 역" 글자가 칩에 밀려 두 줄로 깨지지 않게(iOS LineChips와 같은 규칙).
  */
 @Composable
 fun LineChips(lines: List<String>, modifier: Modifier = Modifier, maxWidth: Dp = 190.dp) {
