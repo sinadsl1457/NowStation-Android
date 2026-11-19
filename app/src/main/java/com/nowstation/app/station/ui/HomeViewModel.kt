@@ -37,7 +37,9 @@ data class HomeUiState(
     val isStarting: Boolean = false,
     val message: String? = null,
 ) {
-    val canStart: Boolean get() = origin != null && !isStarting
+    /** 같은 역을 두 칸에 고름(바꾸기·다시 고르다 생김). 시작하지 않고 카드에 알린다. */
+    val sameStation: Boolean get() = origin != null && origin.name == destination?.name
+    val canStart: Boolean get() = origin != null && !isStarting && !sameStation
     val canSwap: Boolean get() = (origin != null || destination != null) && !isStarting
 }
 
@@ -94,8 +96,6 @@ class HomeViewModel @Inject constructor(
         search("")
     }
 
-    fun clearDestination() = _state.update { it.copy(destination = null) }
-
     /** 타는 역과 내릴 역을 바꾼다(태평 → 강남으로 출근했으면 퇴근길은 강남 → 태평). */
     fun swap() = _state.update { it.copy(origin = it.destination, destination = it.origin) }
 
@@ -111,7 +111,7 @@ class HomeViewModel @Inject constructor(
     fun start() {
         val current = _state.value
         val origin = current.origin ?: return
-        if (current.isStarting) return
+        if (!current.canStart) return
         _state.update { it.copy(isStarting = true) }
         viewModelScope.launch {
             when (val result = tracker.start(origin.name, current.destination?.name)) {

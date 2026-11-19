@@ -70,6 +70,21 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `타는 역과 내릴 역이 같으면 시작할 수 없다`() = runTest(main.dispatcher) {
+        advanceUntilIdle()
+        vm.edit(PickTarget.ORIGIN)
+        vm.pick(stations.stations[1])
+        vm.edit(PickTarget.DESTINATION)
+        vm.pick(stations.stations[1])
+
+        assertTrue(vm.state.value.sameStation)
+        assertEquals(false, vm.state.value.canStart)
+        vm.start()
+        advanceUntilIdle()
+        assertEquals(null, rides.lastStart)
+    }
+
+    @Test
     fun `내릴 역만 골랐을 때 바꾸면 타는 역이 된다`() = runTest(main.dispatcher) {
         advanceUntilIdle()
         vm.edit(PickTarget.DESTINATION)

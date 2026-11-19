@@ -27,7 +27,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.outlined.Schedule
@@ -67,7 +66,6 @@ class HomeActions(
     val onQueryChange: (String) -> Unit,
     val onPick: (Station) -> Unit,
     val onEdit: (PickTarget) -> Unit,
-    val onClearDestination: () -> Unit,
     val onSwap: () -> Unit,
     val onStart: () -> Unit,
     val onStartRecent: (RecentRoute) -> Unit,
@@ -168,13 +166,12 @@ private fun RouteCard(state: HomeUiState, actions: HomeActions) {
                     Spacer(Modifier.width(14.dp))
                     Box(Modifier.weight(1f).height(1.dp).background(Color(0xFFEEF1F6)))
                 }
-                StationField(
-                    "내릴 역 (선택)", state.destination, filledDot = false,
-                    onClick = { actions.onEdit(PickTarget.DESTINATION) },
-                    onClear = if (state.destination != null) actions.onClearDestination else null,
-                )
+                StationField("내릴 역 (선택)", state.destination, filledDot = false, onClick = { actions.onEdit(PickTarget.DESTINATION) })
             }
             SwapButton(enabled = state.canSwap, onClick = actions.onSwap)
+        }
+        if (state.sameStation) {
+            Text("타는 역과 내릴 역이 같아요", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = 26.dp, top = 4.dp))
         }
         Spacer(Modifier.height(12.dp))
         Button(
@@ -203,7 +200,7 @@ private fun SwapButton(enabled: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun StationField(label: String, station: Station?, filledDot: Boolean, onClick: () -> Unit, onClear: (() -> Unit)? = null) {
+private fun StationField(label: String, station: Station?, filledDot: Boolean, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().heightIn(min = 60.dp).clickable(onClick = onClick),
@@ -228,9 +225,6 @@ private fun StationField(label: String, station: Station?, filledDot: Boolean, o
         }
         Box(Modifier.weight(1f).padding(start = 8.dp), contentAlignment = Alignment.CenterEnd) {
             station?.lines?.let { LineChips(it) }
-        }
-        if (onClear != null) IconButton(onClick = onClear) {
-            Icon(Icons.Filled.Close, contentDescription = "내릴 역 지우기", tint = Muted, modifier = Modifier.size(18.dp))
         }
     }
 }
