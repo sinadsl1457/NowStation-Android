@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.outlined.Schedule
@@ -69,7 +70,7 @@ class HomeActions(
     val onEdit: (PickTarget) -> Unit,
     val onSwap: () -> Unit,
     val onStart: () -> Unit,
-    val onStartRecent: (RecentRoute) -> Unit,
+    val onUseRecent: (RecentRoute) -> Unit,
     val onCloseSearch: () -> Unit,
 )
 
@@ -95,7 +96,7 @@ private fun HomeContent(state: HomeUiState, actions: HomeActions) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             RouteCard(state, actions)
-            if (state.recent.isNotEmpty()) RecentRoutes(state.recent, state.isStarting, actions.onStartRecent) else HowItWorks()
+            if (state.recent.isNotEmpty()) RecentRoutes(state.recent, state.isStarting, actions.onUseRecent) else HowItWorks()
             if (state.lines.isNotEmpty()) SupportedLines(state.lines)
             // 공공데이터 이용 조건: 출처 표시
             Text(
@@ -236,12 +237,12 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun RecentRoutes(routes: List<RecentRoute>, starting: Boolean, onStart: (RecentRoute) -> Unit) {
+private fun RecentRoutes(routes: List<RecentRoute>, starting: Boolean, onUse: (RecentRoute) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SectionTitle("최근 경로")
         routes.forEach { route ->
             Surface(
-                onClick = { onStart(route) },
+                onClick = { onUse(route) },
                 enabled = !starting,
                 shape = RoundedCornerShape(16.dp),
                 color = Color.White,
@@ -263,7 +264,8 @@ private fun RecentRoutes(routes: List<RecentRoute>, starting: Boolean, onStart: 
                             }
                         }
                     }
-                    Text("바로 시작", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Brand)
+                    // 누르면 위 칸에 채운다(바로 시작하지 않음)
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "칸에 채우기", tint = Muted)
                 }
             }
         }

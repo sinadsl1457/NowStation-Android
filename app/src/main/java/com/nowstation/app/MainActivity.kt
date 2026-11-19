@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     val actions = remember(vm) {
-                        HomeActions(vm::onQueryChange, vm::pick, vm::edit, vm::swap, vm::start, vm::startRecent, vm::closeSearch)
+                        HomeActions(vm::onQueryChange, vm::pick, vm::edit, vm::swap, vm::start, vm::useRecent, vm::closeSearch)
                     }
                     HomeScreen(state, actions)
                 }

@@ -102,12 +102,13 @@ class HomeViewModel @Inject constructor(
 
     fun dismissMessage() = _state.update { it.copy(message = null) }
 
-    /** 최근 경로를 눌러 바로 시작. */
-    fun startRecent(route: RecentRoute) {
+    /**
+     * 최근 경로를 누르면 칸에 채우기만 한다. 시작은 사용자가 누른다(사용자 피드백: 바로 출발하면 예상과 다르고,
+     * 귀갓길은 채운 뒤 바꾸기를 누르는 게 자연스럽다).
+     */
+    fun useRecent(route: RecentRoute) {
         if (_state.value.isStarting) return
         _state.update { it.copy(origin = route.origin, destination = route.destination) }
-        // 내릴 역이 선택이던 때 저장된 경로: 내릴 역부터 고르게 한다
-        if (route.destination == null) edit(PickTarget.DESTINATION) else start()
     }
 
     fun start() {

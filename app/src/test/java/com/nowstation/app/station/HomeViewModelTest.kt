@@ -93,17 +93,17 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `내릴 역 없이 저장된 옛 최근 경로를 누르면 내릴 역 고르기를 연다`() = runTest(main.dispatcher) {
+    fun `내릴 역 없이 저장된 옛 최근 경로는 타는 역만 채운다`() = runTest(main.dispatcher) {
         recent.routes = listOf(RecentRoute(stations.stations[0], null))
         advanceUntilIdle()
 
-        vm.startRecent(vm.state.value.recent[0])
+        vm.useRecent(vm.state.value.recent[0])
         advanceUntilIdle()
 
         assertEquals(null, rides.lastStart)
         assertEquals("태평", vm.state.value.origin?.name)
-        assertTrue(vm.state.value.searching)
-        assertEquals(PickTarget.DESTINATION, vm.state.value.target)
+        assertEquals(null, vm.state.value.destination)
+        assertEquals(false, vm.state.value.canStart)
     }
 
     @Test
@@ -206,15 +206,20 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `최근 경로를 누르면 그 역들로 바로 시작한다`() = runTest(main.dispatcher) {
-        val route = RecentRoute(stations.stations[0], stations.stations[1])
-        recent.routes = listOf(route)
+    fun `최근 경로를 누르면 칸에만 채우고, 시작은 사용자가 누른다(바꾸기로 귀갓길)`() = runTest(main.dispatcher) {
+        recent.routes = listOf(RecentRoute(stations.stations[0], stations.stations[1]))
         advanceUntilIdle()
 
-        vm.startRecent(vm.state.value.recent[0])
+        vm.useRecent(vm.state.value.recent[0])
         advanceUntilIdle()
+        assertEquals(0, launcher.started)
+        assertEquals(null, rides.lastStart)
+        assertEquals("태평", vm.state.value.origin?.name)
+        assertEquals("강남", vm.state.value.destination?.name)
 
-        assertEquals(1, launcher.started)
-        assertEquals("태평" to "강남", rides.lastStart)
+        vm.swap()
+        vm.start()
+        advanceUntilIdle()
+        assertEquals("강남" to "태평", rides.lastStart)
     }
 }
