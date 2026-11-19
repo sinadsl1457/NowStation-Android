@@ -34,6 +34,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -68,12 +73,27 @@ import java.time.format.DateTimeFormatter
 /** 탑승 중. 내릴 역 직전이면 화면 전체를 파랑으로 바꿔 주머니에서 꺼냈을 때 바로 알아보게 한다. */
 @Composable
 fun RideScreen(ride: ActiveRide, onEnd: () -> Unit) {
+    // 끝내기는 되돌릴 수 없어서(현재역 표시·내릴 역 알림이 멈춤) 한 번 더 묻는다
+    var confirming by rememberSaveable { mutableStateOf(false) }
+    val askEnd = { confirming = true }
     AnimatedContent(
         targetState = ride.view.prepareToAlight,
         transitionSpec = { (slideInVertically(tween(450)) { it / 3 } + fadeIn(tween(300))) togetherWith fadeOut(tween(200)) },
         label = "alight",
     ) { alight ->
-        if (alight) AlightContent(ride, onEnd) else RidingContent(ride, onEnd)
+        if (alight) AlightContent(ride, askEnd) else RidingContent(ride, askEnd)
+    }
+    if (confirming) {
+        AlertDialog(
+            onDismissRequest = { confirming = false },
+            title = { Text("탑승을 끝낼까요?") },
+            text = { Text("끝내면 현재역 표시와 내릴 역 알림이 멈춰요.") },
+            confirmButton = {
+                TextButton(onClick = { confirming = false; onEnd() }) { Text("끝내기", fontWeight = FontWeight.Bold) }
+            },
+            dismissButton = { TextButton(onClick = { confirming = false }) { Text("계속 타기", color = Muted) } },
+            containerColor = Color.White,
+        )
     }
 }
 
