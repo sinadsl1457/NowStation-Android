@@ -30,4 +30,6 @@ data class MotionRules(
     val handlingRotation: Double = 0.25,
     /** 열차 가속·감속은 길어야 20~30초. 같은 힘이 이보다 오래 이어지면 가속이 아니라 기울어진 것(천천히 기울인 경우). */
     val maxPushSeconds: Double = 40.0,
+    /** 자이로가 이보다 느리게 돈다고 하면 무시한다(rad/s, 약 1.1°/s). 가만히 있어도 나오는 센서 오차가 쌓이면 기울기가 틀어진다. */
+    val gyroDeadband: Double = 0.02,
 )

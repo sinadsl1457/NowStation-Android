@@ -109,11 +109,12 @@ class MotionDetectorTest {
     }
 
     // 실기기(iOS)에서 발견: 탑승을 시작하고 폰을 책상에 내려놓았더니 가만히 있는데 "출발"로 판단해 엉뚱한 열차를 따라감
-    private fun tilted(seconds: Double, deg: (Double) -> Double, rotation: (Double) -> Double = { 0.0 }, extra: (Double) -> Triple<Double, Double, Double> = { Triple(0.0, 0.0, 0.0) }) =
+    /** z축으로 [deg]만큼 기운 폰. [gz]: 자이로가 잰 z축 회전(rad/s). */
+    private fun tilted(seconds: Double, deg: (Double) -> Double, gz: (Double) -> Double = { 0.0 }, extra: (Double) -> Triple<Double, Double, Double> = { Triple(0.0, 0.0, 0.0) }) =
         generateSequence(0.0) { it + 0.05 }.takeWhile { it < seconds }.map { s ->
             val r = Math.toRadians(deg(s))
             val (ex, ey, ez) = extra(s)
-            AccelSample(at(s), 9.8 * sin(r) + ex, 9.8 * cos(r) + ey, ez, rotation = rotation(s))
+            AccelSample(at(s), 9.8 * sin(r) + ex, 9.8 * cos(r) + ey, ez, gz = gz(s))
         }.toList()
 
     @Test
@@ -127,11 +128,11 @@ class MotionDetectorTest {
     }
 
     @Test
-    fun `흔들림 없이 살살 돌려 내려놓아도 회전으로 알아채 출발이 아니다`() {
+    fun `흔들림 없이 살살 돌려 내려놓아도 자이로로 따라가 출발이 아니다`() {
         val samples = tilted(
             90.0,
             deg = { s -> if (s < 10) 0.0 else if (s < 11) (s - 10) * 10 else 10.0 },
-            rotation = { s -> if (s in 10.0..11.0) 0.6 else 0.0 },
+            gz = { s -> if (s >= 10 && s < 11) Math.toRadians(10.0) else 0.0 }, // 실제로 돈 빠르기(1초에 10°)
         )
         assertTrue(run(samples).isEmpty())
     }
@@ -146,5 +147,25 @@ class MotionDetectorTest {
         val last = run(samples).last()
         assertEquals(MotionKind.MOVING, last.kind)
         assertNear(at(150.0), last.at, 1.5)
+    }
+
+    // 실기기에서 두 번째 발견: 잠근 폰을 쥐고 집 안을 걷자 손 각도가 천천히 바뀐 걸 "출발"로 판단
+    @Test
+    fun `폰을 들고 걸으며 손 각도가 천천히 바뀌어도 출발이 아니다`() {
+        val period = 20.0
+        val amp = 12.0 // 20초마다 ±12° 천천히 오락가락(최대 초당 약 4°, 만진다고 보기엔 느림)
+        val samples = tilted(
+            180.0,
+            deg = { s -> amp * sin(2 * PI * s / period) },
+            gz = { s -> Math.toRadians(amp * (2 * PI / period) * cos(2 * PI * s / period)) },
+            extra = { s -> Triple(0.0, 0.3 * sin(2 * PI * 1.8 * s), 0.0) }, // 살살 걷는 덜컹
+        )
+        assertTrue(run(samples).isEmpty())
+    }
+
+    @Test
+    fun `가만히 있는데 자이로가 조금씩 틀려도 10분 동안 출발이 아니다`() {
+        // 센서 오차: 실제로는 안 도는데 0.015 rad/s(초당 약 0.9°)씩 돈다고 나옴
+        assertTrue(run(tilted(600.0, deg = { 0.0 }, gz = { 0.015 })).isEmpty())
     }
 }

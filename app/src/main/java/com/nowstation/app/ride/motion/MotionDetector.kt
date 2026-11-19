@@ -7,8 +7,21 @@ import kotlin.math.acos
 import kotlin.math.exp
 import kotlin.math.sqrt
 
-/** 가속도 센서 값 하나(중력 포함, m/s²). [rotation]: 자이로가 잰 회전 빠르기(rad/s), 사람이 폰을 만지는지 가리는 데만 쓴다. */
-data class AccelSample(val at: Instant, val x: Double, val y: Double, val z: Double, val rotation: Double = 0.0)
+/**
+ * 가속도 센서 값 하나(중력 포함, m/s²). [gx]·[gy]·[gz]: 자이로(rad/s, 폰 기준 x·y·z축 회전).
+ * 자이로로 기울기를 따라가고, 사람이 폰을 만지는지 가린다.
+ */
+data class AccelSample(
+    val at: Instant,
+    val x: Double,
+    val y: Double,
+    val z: Double,
+    val gx: Double = 0.0,
+    val gy: Double = 0.0,
+    val gz: Double = 0.0,
+) {
+    val rotation: Double get() = sqrt(gx * gx + gy * gy + gz * gz)
+}
 
 /**
  * 가속도 센서 값에서 열차의 "출발"과 "도착"만 사건으로 뽑는다(순수 Kotlin, 기기 없이 테스트).
@@ -43,20 +56,26 @@ class MotionDetector(private val rules: MotionRules = MotionRules()) {
     /** 값 하나를 넣고, 사건이 생기면 돌려준다. */
     fun accept(sample: AccelSample): Motion? {
         val raw = Vec(sample.x, sample.y, sample.z)
-        val g = gravity
+        var g = gravity
         val prev = last
         last = sample.at
         if (g == null || prev == null) {
             reset(raw, sample.at)
             return null
         }
-        // 폰을 돌렸다: 중력을 다시 잡고 잠시 판단하지 않는다
+        val dt = (sample.at.toEpochMilli() - prev.toEpochMilli()) / 1000.0
+        if (dt <= 0) return null
+        // 폰이 돈 만큼 중력 방향도 돌려 맞춘다(자이로). 빠르든 느리든 기울기를 "미는 힘"으로 착각하지 않게.
+        // 열차 가속은 폰을 돌리지 않으니 자이로가 거의 0이고, 그대로 밀림으로 남는다.
+        if (sample.rotation > rules.gyroDeadband) {
+            g = g - Vec(sample.gx, sample.gy, sample.gz).cross(g) * dt
+            gravity = g
+        }
+        // 폰을 크게 돌렸다: 중력을 다시 잡고 잠시 판단하지 않는다
         if (raw.angleDegrees(g) > rules.reorientDegrees) {
             reset(raw, sample.at)
             return null
         }
-        val dt = (sample.at.toEpochMilli() - prev.toEpochMilli()) / 1000.0
-        if (dt <= 0) return null
 
         val linear = raw - g
         push = blend(push, linear, dt, rules.pushSmoothingSeconds)
@@ -164,6 +183,7 @@ internal data class Vec(val x: Double, val y: Double, val z: Double) {
     operator fun times(k: Double) = Vec(x * k, y * k, z * k)
     val length: Double get() = sqrt(x * x + y * y + z * z)
     fun dot(o: Vec) = x * o.x + y * o.y + z * o.z
+    fun cross(o: Vec) = Vec(y * o.z - z * o.y, z * o.x - x * o.z, x * o.y - y * o.x)
     fun cosine(o: Vec): Double {
         val l = length * o.length
         return if (l == 0.0) 0.0 else dot(o) / l

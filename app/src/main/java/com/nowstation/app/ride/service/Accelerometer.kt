@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
-import kotlin.math.sqrt
 
 /** 가속도 센서(중력 포함) 값을 20Hz로. 열차 가속은 몇 초짜리라 이 정도면 충분하고 배터리를 덜 쓴다. */
 class Accelerometer @Inject constructor(
@@ -30,25 +29,24 @@ class Accelerometer @Inject constructor(
             return@callbackFlow
         }
         // 자이로(회전 빠르기): 사람이 폰을 들거나 내려놓는지 가린다. 없는 기기면 0(흔들림으로만 가림)
-        val gyro = manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-        var rotation = 0.0 // 두 센서 모두 같은 스레드(메인 루퍼)로 온다
+        val gyroSensor = manager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+        var gyro = floatArrayOf(0f, 0f, 0f) // 두 센서 모두 같은 스레드(메인 루퍼)로 온다
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 if (event.sensor.type == Sensor.TYPE_GYROSCOPE) {
-                    val (x, y, z) = event.values
-                    rotation = sqrt((x * x + y * y + z * z).toDouble())
+                    gyro = event.values.copyOf(3)
                     return
                 }
                 // 센서 시각은 부팅 후 경과 시간이라 벽시계로 바꾼다(묶음으로 늦게 와도 실제 잰 시각을 쓰게)
                 val ageNanos = SystemClock.elapsedRealtimeNanos() - event.timestamp
                 val at = Instant.now(clock).minusNanos(ageNanos)
-                trySend(AccelSample(at, event.values[0].toDouble(), event.values[1].toDouble(), event.values[2].toDouble(), rotation))
+                trySend(AccelSample(at, event.values[0].toDouble(), event.values[1].toDouble(), event.values[2].toDouble(), gyro[0].toDouble(), gyro[1].toDouble(), gyro[2].toDouble()))
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
         }
         manager.registerListener(listener, sensor, SAMPLING_US, MAX_LATENCY_US)
-        gyro?.let { manager.registerListener(listener, it, SAMPLING_US, MAX_LATENCY_US) }
+        gyroSensor?.let { manager.registerListener(listener, it, SAMPLING_US, MAX_LATENCY_US) }
         awaitClose { manager.unregisterListener(listener) }
     }.buffer(SAMPLES_BUFFER)
 
