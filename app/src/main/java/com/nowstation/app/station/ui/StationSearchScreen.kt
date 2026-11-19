@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.sp
 import com.nowstation.app.core.ui.Brand
 import com.nowstation.app.core.ui.BrandTint
 import com.nowstation.app.core.ui.Ground
-import com.nowstation.app.core.ui.LineChips
+import com.nowstation.app.core.ui.LineBadges
 import com.nowstation.app.core.ui.Muted
 import com.nowstation.app.core.ui.StatusBarIcons
 import com.nowstation.app.station.domain.Station
@@ -126,7 +126,7 @@ private fun StationResult(station: Station, query: String, chosen: Boolean, onCl
         }
         Spacer(Modifier.width(14.dp))
         Text(highlight(station.name, query), fontSize = 18.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Box(Modifier.weight(1f).padding(start = 8.dp), contentAlignment = Alignment.CenterEnd) { LineChips(station.lines) }
+        Box(Modifier.weight(1f).padding(start = 8.dp), contentAlignment = Alignment.CenterEnd) { LineBadges(station.lines) }
     }
 }
 

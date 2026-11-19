@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 // 파랑: 지원 노선 색(초록·노랑·빨강)과 겹치지 않는다. 주황은 수인분당선과 구분이 안 돼 쓰지 않았다
 val Brand = Color(0xFF1F4FD8)
@@ -63,51 +62,67 @@ fun NowStationTheme(content: @Composable () -> Unit) {
     )
 }
 
+/** 배지에 넣을 짧은 기호: "2호선" → "2", 그 밖의 노선은 첫 글자(수인분당선 → 수, 신분당선 → 신). */
+fun lineSymbol(line: String): String = Regex("^(\\d+)호선$").find(line)?.groupValues?.get(1) ?: line.take(1)
+
 /**
- * 노선 표시: 흰 바탕에 노선 색 점. 노선 색 바탕에 흰 글씨는 노랑(수인분당선)·초록(2호선)에서 글자가 잘 안 읽힌다.
+ * 노선 배지: 노선색으로 채운 원 + 흰 기호. 폭이 모두 같아서 노선이 늘어도 자리를 미리 안다
+ * (이름 칩은 노선 이름 길이만큼 늘어 좁은 폰에서 깨졌다). 화면 읽기는 노선 이름으로 읽는다.
+ */
+@Composable
+fun LineBadge(line: String, size: Dp = 24.dp) {
+    val symbol = lineSymbol(line)
+    Box(
+        Modifier.size(size).background(lineColor(line), CircleShape).semantics { contentDescription = line },
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            symbol,
+            color = Color.White,
+            fontSize = if (symbol.first().isDigit()) 13.sp else 12.sp,
+            fontWeight = FontWeight.ExtraBold,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.clearAndSetSemantics { },
+        )
+    }
+}
+
+/** 한 역의 노선들(홈 카드·역 검색). 배지만, [max]개를 넘으면 "+N". */
+@Composable
+fun LineBadges(lines: List<String>, modifier: Modifier = Modifier, max: Int = 4) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        lines.take(max).forEach { LineBadge(it) }
+        if (lines.size > max) {
+            Text(
+                "+${lines.size - max}",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Muted,
+                modifier = Modifier.background(Color(0xFFEEF1F6), RoundedCornerShape(50)).padding(horizontal = 7.dp, vertical = 3.dp),
+            )
+        }
+    }
+}
+
+/**
+ * 노선 하나를 이름까지(탑승 화면 위쪽처럼 자리가 넉넉한 곳): 배지 + 노선 이름.
  * [onDark]: 파란 배경 위(내릴 준비 화면).
  */
 @Composable
 fun LineChip(line: String, modifier: Modifier = Modifier, onDark: Boolean = false) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
             .then(
                 if (onDark) Modifier.background(Color.White.copy(alpha = 0.16f), RoundedCornerShape(50))
                 else Modifier.background(Color.White, RoundedCornerShape(50)).border(1.dp, Hairline, RoundedCornerShape(50)),
             )
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp),
     ) {
-        LineDot(line)
-        // 칩은 줄어들거나 줄바꿈하지 않는다(좁으면 LineChips가 색 점으로 바꾼다)
-        Text(line, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = if (onDark) Color.White else Ink, maxLines = 1, softWrap = false)
-    }
-}
-
-/**
- * 한 역의 노선 칩들. [maxWidth]와 받은 자리 안에 다 들어가면 칩으로, 아니면 노선 색 점만 보여 준다.
- * 역 이름·"내릴 역" 글자가 칩에 밀려 두 줄로 깨지지 않게(iOS LineChips와 같은 규칙).
- */
-@Composable
-fun LineChips(lines: List<String>, modifier: Modifier = Modifier, maxWidth: Dp = 190.dp) {
-    SubcomposeLayout(modifier.widthIn(max = maxWidth)) { constraints ->
-        val free = Constraints()
-        val full = subcompose("chips") {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) { lines.forEach { LineChip(it) } }
-        }.first().measure(free)
-        val shown = if (full.width <= constraints.maxWidth) full else subcompose("dots") {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .background(Color.White, RoundedCornerShape(50))
-                    .border(1.dp, Hairline, RoundedCornerShape(50))
-                    .padding(horizontal = 8.dp, vertical = 7.dp)
-                    .semantics(mergeDescendants = true) { contentDescription = lines.joinToString(", ") },
-            ) { lines.forEach { LineDot(it, size = 10) } }
-        }.first().measure(free)
-        layout(shown.width, shown.height) { shown.place(0, 0) }
+        LineBadge(line, size = 22.dp)
+        Text(line, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = if (onDark) Color.White else Ink, maxLines = 1, softWrap = false)
     }
 }
 

@@ -55,7 +55,8 @@ import com.nowstation.app.core.ui.BrandTint
 import com.nowstation.app.core.ui.Ground
 import com.nowstation.app.core.ui.Hairline
 import com.nowstation.app.core.ui.LineChip
-import com.nowstation.app.core.ui.LineChips
+import com.nowstation.app.core.ui.LineBadge
+import com.nowstation.app.core.ui.LineBadges
 import com.nowstation.app.core.ui.LineDot
 import com.nowstation.app.core.ui.Muted
 import com.nowstation.app.core.ui.StatusBarIcons
@@ -224,7 +225,7 @@ private fun StationField(label: String, station: Station?, filledDot: Boolean, o
             )
         }
         Box(Modifier.weight(1f).padding(start = 8.dp), contentAlignment = Alignment.CenterEnd) {
-            station?.lines?.let { LineChips(it) }
+            station?.lines?.let { LineBadges(it) }
         }
     }
 }
@@ -306,9 +307,9 @@ private fun SupportedLines(lines: List<String>) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.background(Color.White, RoundedCornerShape(50)).border(1.dp, Hairline, RoundedCornerShape(50)).padding(horizontal = 14.dp, vertical = 8.dp),
+                    modifier = Modifier.background(Color.White, RoundedCornerShape(50)).border(1.dp, Hairline, RoundedCornerShape(50)).padding(start = 6.dp, end = 14.dp, top = 6.dp, bottom = 6.dp),
                 ) {
-                    LineDot(line, size = 10)
+                    LineBadge(line, size = 22.dp)
                     Text(line, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
                 }
             }
