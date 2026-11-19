@@ -41,10 +41,23 @@ enum class RideStatus {
     UNKNOWN,
 }
 
-/** 가로 노선도: 지금 구간 방향의 역(타는 역 몇 정거장 전부터 구간 끝까지)과 그 위 열차. 이번정거장과 같은 배치. */
-data class TrainStrip(val leg: RideLeg, val stations: List<String>, val boardIndex: Int, val trains: List<StripTrain>)
+/**
+ * 노선도: 지금 구간 방향의 역(타는 역 몇 정거장 전부터 구간 끝까지)과 그 위 열차.
+ * [secondsPerStop]·[dwellSeconds]: 받은 위치 사이 움직임을 이어 그리는 기준(공공 데이터는 역에 들어설 때만 바뀐다).
+ */
+data class TrainStrip(
+    val leg: RideLeg,
+    val stations: List<String>,
+    val boardIndex: Int,
+    val trains: List<StripTrain>,
+    val secondsPerStop: Int = 130,
+    val dwellSeconds: Int = 30,
+)
 
-/** [status]: ENTERING·ARRIVED·DEPARTED 등. [selected]: 지금 따라가는(골라 둔) 열차. */
+/**
+ * [status]: ENTERING·ARRIVED·DEPARTED 등. [selected]: 지금 따라가는(골라 둔) 열차.
+ * [message]: 전광판 말투("[2]번째 전역 (야탑)"). [etaMinutes]: 타는 역까지 대략 몇 분(지났으면 null). [atStationSeconds]: 이 역에 온 지 몇 초.
+ */
 data class StripTrain(
     val trainNo: String,
     val station: String,
@@ -52,6 +65,9 @@ data class StripTrain(
     val terminal: String?,
     val selected: Boolean,
     val seenSecondsAgo: Long,
+    val message: String = "",
+    val etaMinutes: Int? = null,
+    val atStationSeconds: Long = 0,
 )
 
 /** 폰이 느낀 탈것의 움직임 변화(4일차: 가속도 센서). */

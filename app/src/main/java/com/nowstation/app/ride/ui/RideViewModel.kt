@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * 탑승 화면. 탑승 상태는 RideTracker(앱 전체 공유)를 그대로 보고, 가로 노선도는 이 화면만 쓰므로 여기서 15초마다 받는다.
+ * 탑승 화면. 탑승 상태는 RideTracker(앱 전체 공유)를 그대로 보고, 가로 노선도는 이 화면만 쓰므로 여기서 5초마다 받는다(서버가 받아 둔 값이라 서울시 API 한도와 무관).
  * 탑승마다 새로 만든다(MainActivity가 rideId를 키로): 끝난 탑승의 노선도를 계속 받지 않게.
  */
 @HiltViewModel
@@ -61,6 +61,6 @@ class RideViewModel @Inject constructor(private val tracker: RideTracker) : View
     }
 
     private companion object {
-        const val REFRESH_MS = 15_000L
+        const val REFRESH_MS = 5_000L
     }
 }

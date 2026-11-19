@@ -21,11 +21,11 @@ class RideViewModelTest {
     private val tracker = RideTracker(repo, Clock.systemUTC())
 
     @Test
-    fun `탑승 중에는 노선도를 15초마다 받고, 탑승이 끝나면 그만 받는다`() = runTest(main.dispatcher) {
+    fun `탑승 중에는 노선도를 5초마다 받고, 탑승이 끝나면 그만 받는다`() = runTest(main.dispatcher) {
         tracker.start("태평", "강남")
         RideViewModel(tracker)
         runCurrent()
-        advanceTimeBy(15_001)
+        advanceTimeBy(5_001)
         assertEquals(2, repo.stripCalls)
 
         tracker.end()

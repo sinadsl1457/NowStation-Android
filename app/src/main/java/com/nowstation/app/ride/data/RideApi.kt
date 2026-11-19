@@ -43,7 +43,14 @@ data class MotionItem(val kind: String, val at: String)
 data class LegDto(val line: String, val from: String, val to: String, val stations: List<String> = emptyList())
 
 @Serializable
-data class TrainStripDto(val leg: LegDto, val stations: List<String>, val boardIndex: Int, val trains: List<StripTrainDto>)
+data class TrainStripDto(
+    val leg: LegDto,
+    val stations: List<String>,
+    val boardIndex: Int,
+    val trains: List<StripTrainDto>,
+    val secondsPerStop: Int = 130,
+    val dwellSeconds: Int = 30,
+)
 
 @Serializable
 data class StripTrainDto(
@@ -53,6 +60,9 @@ data class StripTrainDto(
     val terminal: String? = null,
     val selected: Boolean = false,
     val seenSecondsAgo: Long = 0,
+    val message: String = "",
+    val etaMinutes: Int? = null,
+    val atStationSeconds: Long = 0,
 )
 
 @Serializable

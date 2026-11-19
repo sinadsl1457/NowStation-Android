@@ -31,7 +31,8 @@ class RideRepositoryImpl @Inject constructor(private val api: RideApi) : RideRep
         response.body()?.let { d ->
             TrainStrip(
                 RideLeg(d.leg.line, d.leg.from, d.leg.to), d.stations, d.boardIndex,
-                d.trains.map { StripTrain(it.trainNo, it.station, it.status, it.terminal, it.selected, it.seenSecondsAgo) },
+                d.trains.map { StripTrain(it.trainNo, it.station, it.status, it.terminal, it.selected, it.seenSecondsAgo, it.message, it.etaMinutes, it.atStationSeconds) },
+                d.secondsPerStop, d.dwellSeconds,
             )
         }
     }

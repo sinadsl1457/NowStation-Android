@@ -1,5 +1,8 @@
 package com.nowstation.app.ride.ui
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.offset
 import com.nowstation.app.ride.domain.TrainStrip
 import com.nowstation.app.ride.domain.StripTrain
 import com.nowstation.app.ride.domain.RideLeg
@@ -123,8 +126,9 @@ private fun RidingContent(ride: ActiveRide, strip: TrainStrip?, picking: String?
     StatusBarIcons(dark = true)
     val v = ride.view
     val waiting = v.status == RideStatus.WAITING
+    // 노선도가 길어져 화면을 넘을 수 있어 스크롤(넘치면 아래가 카드 밖으로 잘렸다: 에뮬레이터)
     Column(
-        Modifier.fillMaxSize().background(Ground).safeDrawingPadding().padding(horizontal = 20.dp, vertical = 16.dp),
+        Modifier.fillMaxSize().background(Ground).safeDrawingPadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -152,7 +156,7 @@ private fun RidingContent(ride: ActiveRide, strip: TrainStrip?, picking: String?
         if (v.legs.any { it.stations.isNotEmpty() }) RouteBar(v.legs, v.thisStation, v.line)
         if (strip != null) StripCard(strip, picking, onPick) else RouteCard(ride)
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 6.dp)) {
             Icon(Icons.Outlined.Lock, contentDescription = null, tint = Muted, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
@@ -382,57 +386,136 @@ private fun RouteBar(legs: List<RideLeg>, here: String?, currentLine: String?) {
     }
 }
 
-/** 가로 노선도(이번정거장 4708과 같은 배치): 역이 한 줄로 늘어서고 그 위에 열차. 골라 둔 열차는 칠하고, 다른 열차를 누르면 그 열차로. */
+/**
+ * 세로 "다가오는 열차"(사용자가 시안 B로 정함): 타기 전에는 타는 역 위로 들어오는 역들을 세로로 놓고 열차 점이 아래(타는 역)로 내려온다.
+ * 누르는 곳은 점이 아니라 열차마다 한 줄(높이 60 이상, 도착 순서로 고정): 열차가 움직여도 누르려던 줄이 밀리지 않는다.
+ * 공공 데이터는 역에 들어설 때만 바뀌어, 그 사이는 역간 평균 시간으로 점을 이어 움직인다(다음 역 직전에서 멈춰 데이터를 기다림).
+ * 탄 뒤에는 같은 세로 노선에서 내 열차가 구간 끝(환승역·내릴 역) 쪽으로 내려간다.
+ */
 @Composable
 private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) -> Unit) {
-    val listState = rememberLazyListState()
-    val focus = strip.trains.firstOrNull { it.selected }?.let { strip.stations.indexOf(it.station) }?.takeIf { it >= 0 } ?: strip.boardIndex
-    LaunchedEffect(strip.leg, focus) { listState.scrollToItem((focus - 2).coerceAtLeast(0)) }
-    val c = lineColor(strip.leg.line)
-    Column(Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(24.dp)).padding(16.dp)) {
-        Row {
-            Text("${strip.leg.from} → ${strip.leg.to} 방향 열차", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Ink)
-            Spacer(Modifier.weight(1f))
-            strip.trains.minOfOrNull { it.seenSecondsAgo }?.let { Text("${it}초 전 기준", fontSize = 12.sp, color = Muted) }
+    val receivedAt = remember(strip) { android.os.SystemClock.elapsedRealtime() }
+    var nowMs by remember { mutableStateOf(android.os.SystemClock.elapsedRealtime()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            nowMs = android.os.SystemClock.elapsedRealtime()
+            kotlinx.coroutines.delay(100)
         }
-        if (strip.boardIndex > 0) Text("회색 역: 열차가 ${strip.leg.from}(으)로 들어오는 쪽", fontSize = 11.sp, color = Muted)
-        Spacer(Modifier.height(10.dp))
-        // 열차가 있는 칸과 없는 칸의 역 줄이 같은 높이에 오게 아래로 맞춘다
-        LazyRow(state = listState, verticalAlignment = Alignment.Bottom) {
-            itemsIndexed(strip.stations) { i, name ->
-                val board = i == strip.boardIndex
-                Column(Modifier.width(76.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Column(Modifier.height(104.dp), verticalArrangement = Arrangement.Bottom) {
-                        strip.trains.filter { it.station == name }.forEach { t ->
-                            Column(
-                                Modifier.width(66.dp)
-                                    .background(if (t.selected) c else Color.White, RoundedCornerShape(10.dp))
-                                    .border(1.5.dp, if (t.selected) Color.Transparent else Color(0xFFC9D1E0), RoundedCornerShape(10.dp))
-                                    .clickable(enabled = picking == null && !t.selected) { onPick(t) }
-                                    .padding(vertical = 5.dp)
-                                    .testTag("train-${t.trainNo}"),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                val fg = if (t.selected) Color.White else Ink
-                                Text(RideTexts.terminal(t), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = fg)
-                                RideTexts.trainState(t)?.let { Text(it, fontSize = 10.sp, color = fg.copy(alpha = 0.8f)) }
-                                if (picking == t.trainNo) CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = fg)
-                                else Text(t.trainNo, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = fg)
-                                Text("🚆", fontSize = 12.sp)
-                            }
-                            Spacer(Modifier.height(6.dp))
-                        }
+    }
+    val c = lineColor(strip.leg.line)
+    val selected = strip.trains.firstOrNull { it.selected }
+    val selIdx = selected?.let { strip.stations.indexOf(it.station) } ?: -1
+    val riding = selIdx > strip.boardIndex || (selIdx == strip.boardIndex && selected?.status == "DEPARTED")
+    val from = if (riding) strip.boardIndex else 0
+    val to = if (riding) strip.stations.lastIndex else minOf(strip.boardIndex + 1, strip.stations.lastIndex)
+    val window = strip.stations.subList(from, to + 1)
+    val gap = if (riding) 40f else 60f
+    val travel = (strip.secondsPerStop - strip.dwellSeconds).coerceAtLeast(30)
+    fun pos(t: StripTrain): Float? {
+        val i = strip.stations.indexOf(t.station)
+        if (i < 0) return null
+        val elapsed = t.atStationSeconds + (nowMs - receivedAt) / 1000f
+        val p = when (t.status) {
+            "ENTERING" -> -0.12f
+            "DEPARTED" -> (elapsed / travel).coerceIn(0f, 0.92f)
+            else -> ((elapsed - strip.dwellSeconds) / travel).coerceIn(0f, 0.92f)
+        }
+        return i + p - from
+    }
+    val incoming = strip.trains.filter { strip.stations.indexOf(it.station) <= strip.boardIndex && it.etaMinutes != null }
+        .sortedByDescending { strip.stations.indexOf(it.station) }
+    val shown = if (riding) listOfNotNull(selected) else incoming
+
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (!riding) incoming.firstOrNull()?.let { NextTrainCard(it, strip.leg.from, picking, onPick) }
+        Row(
+            Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(22.dp)).padding(horizontal = 14.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Box(Modifier.width(124.dp).height((window.size * gap + 8).dp)) {
+                Box(Modifier.offset(x = 66.dp, y = 14.dp).width(4.dp).height(((window.size - 1) * gap).dp).background(c, RoundedCornerShape(2.dp)))
+                window.forEachIndexed { k, name ->
+                    val board = from + k == strip.boardIndex
+                    val passed = riding && selIdx >= 0 && from + k < selIdx
+                    Row(Modifier.offset(y = (k * gap + 4).dp).height(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(name, fontSize = 13.sp, maxLines = 1, textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                            fontWeight = if (board) FontWeight.Black else FontWeight.Normal,
+                            color = if (board) Brand else if (passed) Color(0xFFA8B0BF) else Ink,
+                            modifier = Modifier.width(56.dp))
+                        Spacer(Modifier.width(if (board) 3.dp else 6.dp))
+                        Box(Modifier.size(if (board) 18.dp else 12.dp).background(Color.White, CircleShape).border(3.dp, if (board) Brand else c, CircleShape))
                     }
-                    Box(Modifier.fillMaxWidth().height(18.dp), contentAlignment = Alignment.Center) {
-                        Box(Modifier.fillMaxWidth().height(3.dp).background(if (i >= strip.boardIndex) c else Color(0xFFC9D1E0)))
-                        Box(Modifier.size(if (board) 16.dp else 10.dp).background(if (board) c else Color(0xFFC9D1E0), CircleShape))
+                }
+                shown.forEach { t ->
+                    val p = pos(t) ?: return@forEach
+                    if (p < -0.5f || p > window.size - 0.5f) return@forEach
+                    Row(Modifier.offset(x = 58.dp, y = (p * gap + 2).dp), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(20.dp).background(if (t.selected) c else Color(0xFFC9D1E0), RoundedCornerShape(6.dp)).border(2.dp, Color.White, RoundedCornerShape(6.dp)))
+                        Spacer(Modifier.width(4.dp))
+                        Text(t.trainNo, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF2A3348))
                     }
-                    // 타는 역 앞쪽(들어오는 열차가 오는 쪽)은 내 경로가 아니라 흐리게
-                    Text(name, fontSize = 13.sp, fontWeight = if (board) FontWeight.ExtraBold else FontWeight.Normal,
-                        color = if (board) c else if (i < strip.boardIndex) Color(0xFFA8B0BF) else Ink, maxLines = 1)
+                }
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (riding) {
+                    Text("내 열차가 아래로 내려가요", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Ink)
+                    Text("${strip.leg.to}까지 따라가요", fontSize = 13.sp, color = Muted)
+                } else {
+                    Text("가까운 순 · 줄을 눌러 고르기", fontSize = 11.sp, color = Muted)
+                    incoming.forEach { t -> TrainRow(t, c, picking, onPick) }
+                    if (incoming.isEmpty()) Text("지금 들어오는 열차가 없어요", fontSize = 13.sp, color = Muted)
                 }
             }
         }
+        if (!riding) Text("${strip.leg.from}에 서지 않는 급행, ${strip.leg.to}까지 가지 않는 열차는 빼고 보여 줘요", fontSize = 12.sp, color = Muted, modifier = Modifier.padding(horizontal = 4.dp))
     }
 }
 
+/** 열차 번호는 행선지보다 2 크게, 세미볼드(사용자 결정). */
+@Composable
+private fun TrainTitle(t: StripTrain, color: Color, noSize: Int, terminalSize: Int) {
+    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+        Text(t.trainNo, fontSize = noSize.sp, fontWeight = FontWeight.SemiBold, color = color)
+        Text(RideTexts.terminal(t), fontSize = terminalSize.sp, fontWeight = FontWeight.ExtraBold, color = color)
+    }
+}
+
+@Composable
+private fun TrainRow(t: StripTrain, c: Color, picking: String?, onPick: (StripTrain) -> Unit) {
+    val fg = if (t.selected) Color.White else Ink
+    Column(
+        Modifier.fillMaxWidth().heightIn(min = 60.dp)
+            .background(if (t.selected) c else Color.White, RoundedCornerShape(14.dp))
+            .border(2.dp, if (t.selected) c else Color(0xFFE3E8F2), RoundedCornerShape(14.dp))
+            .clickable(enabled = picking == null && !t.selected) { onPick(t) }
+            .padding(horizontal = 12.dp, vertical = 9.dp)
+            .testTag("train-${t.trainNo}"),
+    ) {
+        TrainTitle(t, fg, 17, 15)
+        Text(
+            if (picking == t.trainNo) "고르는 중…" else "${t.message} · ${RideTexts.eta(t)}",
+            fontSize = 13.sp, color = if (t.selected) Color.White.copy(alpha = 0.85f) else Muted,
+        )
+    }
+}
+
+/** 맨 위 "다음 열차": 이것 하나만 봐도 무엇을 탈지 안다. */
+@Composable
+private fun NextTrainCard(t: StripTrain, board: String, picking: String?, onPick: (StripTrain) -> Unit) {
+    val on = t.selected
+    Row(
+        Modifier.fillMaxWidth().background(if (on) Brand else Color.White, RoundedCornerShape(20.dp))
+            .clickable(enabled = picking == null && !on) { onPick(t) }
+            .padding(horizontal = 18.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text("다음 열차", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (on) Color.White.copy(alpha = 0.85f) else Muted)
+            TrainTitle(t, if (on) Color.White else Ink, 24, 20)
+            Text("${t.message} · ${RideTexts.eta(t)}", fontSize = 15.sp, color = if (on) Color.White else Ink)
+        }
+        Text(if (on) "선택됨" else "이 열차 탈게요", fontSize = 14.sp, fontWeight = FontWeight.Bold,
+            color = if (on) Brand else Color.White,
+            modifier = Modifier.background(if (on) Color.White else Brand, RoundedCornerShape(12.dp)).padding(horizontal = 14.dp, vertical = 10.dp))
+    }
+}

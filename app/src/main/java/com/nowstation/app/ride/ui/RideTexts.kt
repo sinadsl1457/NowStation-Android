@@ -76,6 +76,13 @@ object RideTexts {
         else -> null
     }
 
+    /** 타는 역까지 "약 N분", 타는 역에 있으면 "지금 타세요". 역간 평균 시간으로 센 추정이라 "약". iOS와 같은 문구. */
+    fun eta(t: StripTrain): String = when (val m = t.etaMinutes) {
+        null -> "지나감"
+        0 -> "지금 타세요"
+        else -> "약 ${m}분"
+    }
+
     /** 노선도 위 열차 이름표: "왕십리행". */
     fun terminal(t: StripTrain): String = t.terminal?.let { "${it}행" } ?: ""
 
