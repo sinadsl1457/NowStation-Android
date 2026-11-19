@@ -1,7 +1,7 @@
 # NowStation Android (지금역)
 
 지하철에서 **지금 무슨 역인지**를 잠금화면과 상태 표시줄에 보여 주는 앱입니다.
-타는 역만 고르고 시작하면 끝입니다. 열차를 놓쳐도, 열차가 역 사이에 멈춰도, 갈아타도 실제 운행 그대로 따라가고, 내릴 역 직전에 다른 앱 위로 알려 줍니다.
+타는 역과 내릴 역을 고르고 시작하면 끝입니다. 열차를 놓쳐도, 열차가 역 사이에 멈춰도, 갈아타도 실제 운행 그대로 따라가고, 내릴 역 직전에 다른 앱 위로 알려 줍니다.
 
 탄 열차를 찾는 판단은 서버가 합니다 → [NowStation-Server](https://github.com/sinadsl1457/NowStation-Server)(전체 구조도와 판단 원리).
 iOS 버전 → [NowStation-iOS](https://github.com/sinadsl1457/NowStation-iOS)(같은 화면·판단 규칙, 개인 테스트용).
