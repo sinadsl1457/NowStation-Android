@@ -6,12 +6,12 @@
 탄 열차를 찾는 판단은 서버가 합니다 → [NowStation-Server](https://github.com/sinadsl1457/NowStation-Server)(전체 구조도와 판단 원리).
 앱은 **폰이 출발·정차한 순간을 가속도 센서로 잡아 보내고**, 결과를 **앱을 보지 않아도** 알림으로 보여 줍니다.
 
-<p align="center"><img src="docs/demo/nowstation-demo.gif" width="300" alt="태평에서 야탑까지: 탑승 감지, 다른 앱 위로 하차 알림"></p>
-<p align="center"><sub>실제 녹화 열차 데이터 + 에뮬레이터 센서 주입으로 찍은 장면(43초 요약, <a href="docs/demo/nowstation-demo.mp4">mp4</a>)</sub></p>
+<p align="center"><img src="docs/demo/nowstation-demo.gif" width="300" alt="태평에서 야탑까지: 역 고르기, 탑승 감지, 내릴 준비 알림"></p>
+<p align="center"><sub>실제 녹화 열차 데이터 + 에뮬레이터 센서 주입으로 찍은 장면(6분 23초 → 33초 요약, <a href="docs/demo/nowstation-demo.mp4">mp4</a>)</sub></p>
 
-| 탑승 중 | 내릴 역 직전 | 다른 앱(YouTube) 위로 | 잠긴 폰 |
-|---|---|---|---|
-| <img src="docs/screenshots/riding.png" width="190"> | <img src="docs/screenshots/alight.png" width="190"> | <img src="docs/screenshots/popup-over-youtube.png" width="190"> | <img src="docs/screenshots/lockscreen.png" width="190"> |
+| 홈 | 탑승 중 | 내릴 역 직전 | 다른 앱(YouTube) 위로 | 잠긴 폰 |
+|---|---|---|---|---|
+| <img src="docs/screenshots/home.png" width="160"> | <img src="docs/screenshots/riding.png" width="160"> | <img src="docs/screenshots/alight.png" width="160"> | <img src="docs/screenshots/popup-over-youtube.png" width="160"> | <img src="docs/screenshots/lockscreen.png" width="160"> |
 
 ## 기술적으로 신경 쓴 부분
 
