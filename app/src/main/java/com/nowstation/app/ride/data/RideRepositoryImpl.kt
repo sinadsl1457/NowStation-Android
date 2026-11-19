@@ -6,6 +6,7 @@ import com.nowstation.app.ride.domain.Motion
 import com.nowstation.app.ride.domain.RideRepository
 import com.nowstation.app.ride.domain.RideStatus
 import com.nowstation.app.ride.domain.RideView
+import com.nowstation.app.ride.domain.TrainChoice
 import java.time.Instant
 import javax.inject.Inject
 
@@ -19,6 +20,13 @@ class RideRepositoryImpl @Inject constructor(private val api: RideApi) : RideRep
         safeApiCall {
             api.motion(rideId, MotionRequest(motions.map { MotionItem(it.kind.name, it.at.toString()) }, sentAt.toString())).toDomain()
         }
+
+    override suspend fun trains(rideId: String): AppResult<List<TrainChoice>> = safeApiCall {
+        api.trains(rideId).map { TrainChoice(it.line, it.trainNo, it.station, it.status, it.terminal, it.seenSecondsAgo) }
+    }
+
+    override suspend fun choose(rideId: String, line: String, trainNo: String): AppResult<RideView> =
+        safeApiCall { api.choose(rideId, ChooseTrainRequest(line, trainNo)).toDomain() }
 
     override suspend fun end(rideId: String): AppResult<Unit> = safeApiCall { api.end(rideId) }
 }

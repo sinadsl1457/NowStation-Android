@@ -2,6 +2,7 @@ package com.nowstation.app.ride.ui
 
 import com.nowstation.app.ride.domain.ActiveRide
 import com.nowstation.app.ride.domain.RideStatus
+import com.nowstation.app.ride.domain.TrainChoice
 
 /** 화면과 잠금화면 알림이 같은 문구를 쓰도록 한곳에 둔다. */
 object RideTexts {
@@ -53,4 +54,17 @@ object RideTexts {
             RideStatus.STALE, RideStatus.UNKNOWN -> "위치 확인 중"
         }
     }
+
+    /** 고를 열차 한 줄: "가천대 도착". 공공 데이터 상태 그대로(수인분당선은 출발을 주지 않는다). iOS와 같은 문구. */
+    fun trainPlace(t: TrainChoice): String = when (t.status) {
+        "ENTERING" -> "${t.station} 진입 중"
+        "ARRIVED" -> "${t.station} 도착"
+        "DEPARTED" -> "${t.station} 출발"
+        else -> t.station
+    }
+
+    fun trainTerminal(t: TrainChoice): String? = t.terminal?.let { "${it}행" }
+
+    /** 목록이 얼마나 오래된 정보인지(공공 데이터가 늦어 한두 정거장 뒤로 보일 수 있음). */
+    fun seenAgo(seconds: Long): String = if (seconds < 60) "${seconds}초 전 기준" else "${seconds / 60}분 전 기준"
 }

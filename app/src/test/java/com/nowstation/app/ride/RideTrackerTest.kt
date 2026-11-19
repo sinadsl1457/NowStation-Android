@@ -1,5 +1,6 @@
 package com.nowstation.app.ride
 
+import com.nowstation.app.ride.domain.TrainChoice
 import com.nowstation.app.core.result.AppError
 import com.nowstation.app.core.result.AppResult
 import com.nowstation.app.ride.domain.ActiveRide
@@ -154,5 +155,38 @@ class RideTrackerTest {
         assertFalse(ActiveRide.alightAlertStarted(ride(true), ride(false)))
         assertFalse(ActiveRide.alightAlertStarted(ride(true), null))
         assertTrue("새 탑승이면 다시 울린다", ActiveRide.alightAlertStarted(ride(true, "r1"), ride(true, "r2")))
+    }
+
+    @Test
+    fun `시작하면 열차를 고르는 중이고, 고르면 그 열차로 바로 탄다`() = runTest {
+        tracker.start("태평", "왕십리")
+        assertTrue(tracker.state.value!!.choosing)
+
+        val mine = TrainChoice("수인분당선", "6050", "가천대", "ARRIVED", "왕십리", 12)
+        repo.trainsResult = AppResult.Success(listOf(mine))
+        assertEquals(AppResult.Success(listOf(mine)), tracker.trains())
+
+        repo.chooseResult = AppResult.Success(view(RideStatus.AT_STATION, "가천대", "복정", line = "수인분당선"))
+        tracker.choose(mine)
+        assertEquals(listOf("6050"), repo.chosen)
+        assertFalse(tracker.state.value!!.choosing)
+        assertEquals("가천대", tracker.state.value!!.view.thisStation)
+    }
+
+    @Test
+    fun `고르기에 실패하면 계속 고르는 중`() = runTest {
+        tracker.start("태평", "왕십리")
+        repo.chooseResult = AppResult.Error(AppError.BadRequest("지금 보이지 않는 열차"))
+
+        tracker.choose(TrainChoice("수인분당선", "X", "가천대", "ARRIVED", null, 0))
+        assertTrue(tracker.state.value!!.choosing)
+    }
+
+    @Test
+    fun `모르겠어요면 고르지 않고 탑승은 계속`() = runTest {
+        tracker.start("태평", "왕십리")
+        tracker.skipChoosing()
+        assertFalse(tracker.state.value!!.choosing)
+        assertEquals(RideStatus.WAITING, tracker.state.value!!.view.status)
     }
 }

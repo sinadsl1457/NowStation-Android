@@ -23,6 +23,7 @@ com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는
    ├ service/ 포그라운드 서비스(갱신·센서·진동·CPU 깨우기) + 잠금화면 진행 중 알림(Android 16 Live Update)
    └ ui/      탑승 화면, 화면·알림이 같이 쓰는 문구(RideTexts)
 ```
+- 탑승 시작 직후 **탄 열차를 사용자가 고른다**(`TrainPickScreen`, 서버 `GET /rides/{id}/trains` → `POST /rides/{id}/train`). 목록 상태는 그 화면만 써서 `TrainPickViewModel`(탑승마다 새로, 고르는 동안만 받기). 폰 움직임으로 맞히기는 "모르겠어요"일 때만: 걷는 중·늦게 켬에서 실패했다(2026-11-19 실기기)
 - 의존 방향: ui → domain ← data. domain은 Android를 모른다(RideTracker도 순수 Kotlin + 주입된 Clock).
 - ViewModel은 Context를 모른다. 서비스 시작은 `RideServiceLauncher` 인터페이스로.
 - 화면 이동 라이브러리 없이 "탑승 중이면 탑승 화면, 아니면 홈"으로 고른다(화면이 둘뿐).

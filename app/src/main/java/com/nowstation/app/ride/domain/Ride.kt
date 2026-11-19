@@ -25,6 +25,16 @@ enum class RideStatus {
     UNKNOWN,
 }
 
+/** 지금 탄 열차로 고를 수 있는 열차 하나(서버가 출발역에 가까운 순으로 준다). [status]: ENTERING·ARRIVED·DEPARTED 등. */
+data class TrainChoice(
+    val line: String,
+    val trainNo: String,
+    val station: String,
+    val status: String,
+    val terminal: String?,
+    val seenSecondsAgo: Long,
+)
+
 /** 폰이 느낀 탈것의 움직임 변화(4일차: 가속도 센서). */
 enum class MotionKind { MOVING, STOPPED }
 
@@ -34,5 +44,7 @@ interface RideRepository {
     suspend fun start(origin: String, destination: String?): AppResult<RideView>
     suspend fun get(rideId: String): AppResult<RideView>
     suspend fun sendMotion(rideId: String, motions: List<Motion>, sentAt: Instant): AppResult<RideView>
+    suspend fun trains(rideId: String): AppResult<List<TrainChoice>>
+    suspend fun choose(rideId: String, line: String, trainNo: String): AppResult<RideView>
     suspend fun end(rideId: String): AppResult<Unit>
 }

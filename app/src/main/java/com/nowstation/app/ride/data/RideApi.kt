@@ -15,6 +15,12 @@ interface RideApi {
     @POST("api/rides/{id}/motion")
     suspend fun motion(@Path("id") id: String, @Body request: MotionRequest): RideDto
 
+    @GET("api/rides/{id}/trains")
+    suspend fun trains(@Path("id") id: String): List<TrainChoiceDto>
+
+    @POST("api/rides/{id}/train")
+    suspend fun choose(@Path("id") id: String, @Body request: ChooseTrainRequest): RideDto
+
     @GET("api/rides/{id}")
     suspend fun get(@Path("id") id: String): RideDto
 
@@ -30,6 +36,19 @@ data class MotionRequest(val events: List<MotionItem>, val sentAt: String)
 
 @Serializable
 data class MotionItem(val kind: String, val at: String)
+
+@Serializable
+data class TrainChoiceDto(
+    val line: String,
+    val trainNo: String,
+    val station: String,
+    val status: String,
+    val terminal: String? = null,
+    val seenSecondsAgo: Long = 0,
+)
+
+@Serializable
+data class ChooseTrainRequest(val line: String, val trainNo: String)
 
 @Serializable
 data class RideDto(

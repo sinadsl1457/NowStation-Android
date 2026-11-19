@@ -1,5 +1,6 @@
 package com.nowstation.app.ride
 
+import com.nowstation.app.ride.domain.TrainChoice
 import com.nowstation.app.ride.domain.ActiveRide
 import com.nowstation.app.ride.domain.RideStatus
 import com.nowstation.app.ride.domain.RideView
@@ -51,5 +52,15 @@ class RideTextsTest {
         assertEquals("달리는 중", RideTexts.status(ride(view(RideStatus.MOVING, "역삼", "강남"))))
         assertEquals("역 사이 정차", RideTexts.status(ride(view(RideStatus.HOLDING_BETWEEN, "역삼", "강남"))))
         assertEquals("연결 끊김", RideTexts.status(ride(view(RideStatus.MOVING, "역삼", "강남"), online = false)))
+    }
+
+    @Test
+    fun `고를 열차 문구는 iOS와 같다`() {
+        val t = TrainChoice("수인분당선", "6050", "가천대", "ARRIVED", "왕십리", 12)
+        assertEquals("가천대 도착", RideTexts.trainPlace(t))
+        assertEquals("가천대 진입 중", RideTexts.trainPlace(t.copy(status = "ENTERING")))
+        assertEquals("왕십리행", RideTexts.trainTerminal(t))
+        assertEquals("12초 전 기준", RideTexts.seenAgo(12))
+        assertEquals("2분 전 기준", RideTexts.seenAgo(130))
     }
 }

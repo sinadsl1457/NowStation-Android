@@ -49,7 +49,7 @@ Kotlin · Jetpack Compose(Material 3) · Coroutines/Flow · Hilt · Retrofit + k
 
 ## 테스트
 
-- 단위 테스트 33개: 움직임 판단(합성 신호), 못 보낸 움직임 쌓기·버리기, 내릴 역 알림 시점, 문구, 저장소(MockWebServer), 홈 ViewModel
+- 단위 테스트 58개: 움직임 판단(합성 신호), 못 보낸 움직임 쌓기·버리기, 내릴 역 알림 시점, 문구, 저장소(MockWebServer), 홈 ViewModel, 탄 열차 고르기(고르면 바로 탐, 고르는 동안만 15초마다 받기)
 - 에뮬레이터 시연(서버 `scripts/demo/run_scenario.py`): 앱 화면 / YouTube를 보는 중 / 잠긴 폰에서 각 3/3, 환승·지하 끊김 5/5
 
 ```bash

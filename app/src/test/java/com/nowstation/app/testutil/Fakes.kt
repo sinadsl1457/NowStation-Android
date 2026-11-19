@@ -5,6 +5,7 @@ import com.nowstation.app.ride.domain.Motion
 import com.nowstation.app.ride.domain.RideRepository
 import com.nowstation.app.ride.domain.RideStatus
 import com.nowstation.app.ride.domain.RideView
+import com.nowstation.app.ride.domain.TrainChoice
 import com.nowstation.app.ride.service.RideServiceLauncher
 import com.nowstation.app.station.domain.RecentRoute
 import com.nowstation.app.station.domain.RecentRouteStore
@@ -33,6 +34,18 @@ class FakeRideRepository : RideRepository {
     override suspend fun sendMotion(rideId: String, motions: List<Motion>, sentAt: Instant): AppResult<RideView> {
         sentMotions += motions to sentAt
         return motionResult ?: getResult
+    }
+    var trainsResult: AppResult<List<TrainChoice>> = AppResult.Success(emptyList())
+    var chooseResult: AppResult<RideView> = AppResult.Success(view())
+    val chosen = mutableListOf<String>()
+    var trainsCalls = 0
+    override suspend fun trains(rideId: String): AppResult<List<TrainChoice>> {
+        trainsCalls++
+        return trainsResult
+    }
+    override suspend fun choose(rideId: String, line: String, trainNo: String): AppResult<RideView> {
+        chosen += trainNo
+        return chooseResult
     }
     override suspend fun end(rideId: String): AppResult<Unit> {
         ended += rideId

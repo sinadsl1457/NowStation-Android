@@ -18,6 +18,9 @@ import com.nowstation.app.ride.domain.RideNotice
 import com.nowstation.app.ride.domain.RideTracker
 import com.nowstation.app.ride.ui.RideScreen
 import com.nowstation.app.ride.ui.RideViewModel
+import com.nowstation.app.ride.ui.TrainPickActions
+import com.nowstation.app.ride.ui.TrainPickScreen
+import com.nowstation.app.ride.ui.TrainPickViewModel
 import com.nowstation.app.station.ui.HomeActions
 import com.nowstation.app.station.ui.HomeScreen
 import com.nowstation.app.station.ui.HomeViewModel
@@ -49,11 +52,26 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 val current = ride
-                if (current != null) {
+                val home: HomeViewModel = hiltViewModel()
+                if (current != null && current.choosing) {
+                    // 탑승마다 새로(같은 화면 상태가 다음 탑승에 남지 않게)
+                    val pickVm: TrainPickViewModel = hiltViewModel(key = current.view.rideId)
+                    val pickState by pickVm.state.collectAsStateWithLifecycle()
+                    val actions = remember(pickVm, home) {
+                        TrainPickActions(
+                            pick = pickVm::pick,
+                            unsure = pickVm::unsure,
+                            // 아직 안 탔으면 방금 경로를 칸에 다시 채워 둔다(타면 시작만 누르게)
+                            notYet = { pickVm.notYet { home.state.value.recent.firstOrNull()?.let(home::useRecent) } },
+                            dismissPickFailed = pickVm::dismissPickFailed,
+                        )
+                    }
+                    TrainPickScreen(current, pickState, actions)
+                } else if (current != null) {
                     val vm: RideViewModel = hiltViewModel()
                     RideScreen(current, onEnd = vm::end)
                 } else {
-                    val vm: HomeViewModel = hiltViewModel()
+                    val vm = home
                     val state by vm.state.collectAsStateWithLifecycle()
                     LaunchedEffect(state.message) {
                         state.message?.let {
