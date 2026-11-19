@@ -27,7 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.NorthWest
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.outlined.Schedule
@@ -264,8 +264,8 @@ private fun RecentRoutes(routes: List<RecentRoute>, starting: Boolean, onUse: (R
                             }
                         }
                     }
-                    // 누르면 위 칸에 채운다(바로 시작하지 않음)
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "칸에 채우기", tint = Muted)
+                    // 누르면 위 칸에 채운다(바로 시작하지 않음). ↖ = 검색 추천어처럼 "입력칸에 넣기"(›는 다음 화면으로 보여서 뺐다)
+                    Icon(Icons.Filled.NorthWest, contentDescription = "칸에 채우기", tint = Muted, modifier = Modifier.size(20.dp))
                 }
             }
         }
