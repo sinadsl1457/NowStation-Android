@@ -4,6 +4,7 @@
 타는 역만 고르고 시작하면 끝입니다. 열차를 놓쳐도, 열차가 역 사이에 멈춰도, 갈아타도 실제 운행 그대로 따라가고, 내릴 역 직전에 다른 앱 위로 알려 줍니다.
 
 탄 열차를 찾는 판단은 서버가 합니다 → [NowStation-Server](https://github.com/sinadsl1457/NowStation-Server)(전체 구조도와 판단 원리).
+iOS 버전 → [NowStation-iOS](https://github.com/sinadsl1457/NowStation-iOS)(같은 화면·판단 규칙, 개인 테스트용).
 앱은 **폰이 출발·정차한 순간을 가속도 센서로 잡아 보내고**, 결과를 **앱을 보지 않아도** 알림으로 보여 줍니다.
 
 <p align="center"><img src="docs/demo/nowstation-demo.gif" width="300" alt="태평에서 야탑까지: 역 고르기, 탑승 감지, 내릴 준비 알림"></p>
