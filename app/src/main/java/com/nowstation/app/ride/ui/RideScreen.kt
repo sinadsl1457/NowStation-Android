@@ -34,7 +34,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -184,10 +183,6 @@ private fun AlightContent(ride: ActiveRide, onEnd: () -> Unit) {
     Column(Modifier.fillMaxSize().background(Brand).safeDrawingPadding().padding(horizontal = 24.dp, vertical = 16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             v.line?.let { LineChip(it, onDark = true) }
-            Spacer(Modifier.weight(1f))
-            Icon(Icons.Outlined.Vibration, contentDescription = null, tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(6.dp))
-            Text("진동으로 알렸어요", style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.9f))
         }
         Column(
             Modifier.weight(1f).fillMaxWidth(),
