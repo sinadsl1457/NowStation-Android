@@ -23,4 +23,11 @@ data class MotionRules(
     val oppositeCosine: Double = -0.3,
     /** 시작 직후 중력이 자리 잡을 때까지 판단하지 않는다(초). */
     val warmupSeconds: Double = 3.0,
+    /**
+     * 폰이 이보다 빨리 돌면 사람이 들거나 내려놓는 중(rad/s, 약 14°/s). 열차가 곡선에서 폰을 돌리는 건 0.1 아래.
+     * 손을 뗀 뒤 지금 자세로 중력을 다시 잡는다: 20°보다 작게 기울어도 5°면 0.85 m/s²라 가속으로 착각했다(실기기).
+     */
+    val handlingRotation: Double = 0.25,
+    /** 열차 가속·감속은 길어야 20~30초. 같은 힘이 이보다 오래 이어지면 가속이 아니라 기울어진 것(천천히 기울인 경우). */
+    val maxPushSeconds: Double = 40.0,
 )

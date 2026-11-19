@@ -7,8 +7,8 @@ import kotlin.math.acos
 import kotlin.math.exp
 import kotlin.math.sqrt
 
-/** 가속도 센서 값 하나(중력 포함, m/s²). */
-data class AccelSample(val at: Instant, val x: Double, val y: Double, val z: Double)
+/** 가속도 센서 값 하나(중력 포함, m/s²). [rotation]: 자이로가 잰 회전 빠르기(rad/s), 사람이 폰을 만지는지 가리는 데만 쓴다. */
+data class AccelSample(val at: Instant, val x: Double, val y: Double, val z: Double, val rotation: Double = 0.0)
 
 /**
  * 가속도 센서 값에서 열차의 "출발"과 "도착"만 사건으로 뽑는다(순수 Kotlin, 기기 없이 테스트).
@@ -29,6 +29,9 @@ class MotionDetector(private val rules: MotionRules = MotionRules()) {
 
     private var moving = false
     private var departureDirection: Vec? = null
+
+    /** 폰을 들거나 내려놓는 중이었다. 끝나면 그때 자세를 새 기준으로 잡는다. */
+    private var handling = false
 
     /** 진행 중인 꾸준한 밀림. */
     private var burstStart: Instant? = null
@@ -61,7 +64,24 @@ class MotionDetector(private val rules: MotionRules = MotionRules()) {
         // 꾸준한 밀림이 없을 때만 중력을 따라간다(열차 가속이 중력에 섞이지 않게)
         if (push.length < rules.pushEndThreshold) gravity = blend(g, raw, dt, rules.gravitySeconds)
 
-        if (sample.at < judgeFrom || shake > rules.maxShakeForJudging) {
+        if (sample.rotation > rules.handlingRotation || shake > rules.maxShakeForJudging) {
+            handling = true
+            endBurst()
+            return null
+        }
+        if (handling) {
+            handling = false
+            reset(raw, sample.at)
+            return null
+        }
+        val start = burstStart
+        if (start != null && seconds(start, sample.at) > rules.maxPushSeconds) {
+            // 가속이 아니라 기울어진 채 그대로였다. 이 밀림으로 낸 "출발"도 틀렸으니 멈춘 것으로 되돌린다
+            if (burstConfirmed) moving = false
+            reset(raw, sample.at)
+            return null
+        }
+        if (sample.at < judgeFrom) {
             endBurst()
             return null
         }

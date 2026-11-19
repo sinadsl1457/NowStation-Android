@@ -107,4 +107,44 @@ class MotionDetectorTest {
 
         assertEquals(listOf(MotionKind.MOVING), events.map { it.kind })
     }
+
+    // 실기기(iOS)에서 발견: 탑승을 시작하고 폰을 책상에 내려놓았더니 가만히 있는데 "출발"로 판단해 엉뚱한 열차를 따라감
+    private fun tilted(seconds: Double, deg: (Double) -> Double, rotation: (Double) -> Double = { 0.0 }, extra: (Double) -> Triple<Double, Double, Double> = { Triple(0.0, 0.0, 0.0) }) =
+        generateSequence(0.0) { it + 0.05 }.takeWhile { it < seconds }.map { s ->
+            val r = Math.toRadians(deg(s))
+            val (ex, ey, ez) = extra(s)
+            AccelSample(at(s), 9.8 * sin(r) + ex, 9.8 * cos(r) + ey, ez, rotation = rotation(s))
+        }.toList()
+
+    @Test
+    fun `손에 들었다가 조금 기울여 책상에 내려놓으면 출발이 아니다`() {
+        val samples = tilted(
+            120.0,
+            deg = { s -> if (s < 10) 0.0 else if (s < 11.5) (s - 10) / 1.5 * 8 else 8.0 },
+            extra = { s -> if (s in 10.0..11.5) Triple(1.5 * sin(2 * PI * 6 * s), 0.0, 0.75 * sin(2 * PI * 6 * s)) else Triple(0.0, 0.0, 0.0) },
+        )
+        assertTrue(run(samples).isEmpty())
+    }
+
+    @Test
+    fun `흔들림 없이 살살 돌려 내려놓아도 회전으로 알아채 출발이 아니다`() {
+        val samples = tilted(
+            90.0,
+            deg = { s -> if (s < 10) 0.0 else if (s < 11) (s - 10) * 10 else 10.0 },
+            rotation = { s -> if (s in 10.0..11.0) 0.6 else 0.0 },
+        )
+        assertTrue(run(samples).isEmpty())
+    }
+
+    @Test
+    fun `천천히 기울어 굳어도 40초 뒤에는 풀리고 진짜 출발을 잡는다`() {
+        val samples = tilted(
+            200.0,
+            deg = { s -> if (s < 10) 0.0 else if (s < 20) (s - 10) * 0.6 else 6.0 },
+            extra = { s -> Triple(0.0, 0.0, if (s in 150.0..160.0) 0.9 else 0.0) },
+        )
+        val last = run(samples).last()
+        assertEquals(MotionKind.MOVING, last.kind)
+        assertNear(at(150.0), last.at, 1.5)
+    }
 }
