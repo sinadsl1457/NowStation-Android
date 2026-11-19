@@ -55,6 +55,35 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `바꾸기를 누르면 타는 역과 내릴 역이 서로 바뀐다(퇴근길)`() = runTest(main.dispatcher) {
+        advanceUntilIdle()
+        assertEquals(false, vm.state.value.canSwap)
+        vm.edit(PickTarget.ORIGIN)
+        vm.pick(stations.stations[0])
+        vm.edit(PickTarget.DESTINATION)
+        vm.pick(stations.stations[1])
+
+        vm.swap()
+
+        assertEquals("강남", vm.state.value.origin?.name)
+        assertEquals("태평", vm.state.value.destination?.name)
+    }
+
+    @Test
+    fun `내릴 역만 골랐을 때 바꾸면 타는 역이 된다`() = runTest(main.dispatcher) {
+        advanceUntilIdle()
+        vm.edit(PickTarget.DESTINATION)
+        vm.pick(stations.stations[1])
+        assertTrue(vm.state.value.canSwap)
+
+        vm.swap()
+
+        assertEquals("강남", vm.state.value.origin?.name)
+        assertEquals(null, vm.state.value.destination)
+        assertTrue(vm.state.value.canStart)
+    }
+
+    @Test
     fun `지원 노선을 받아 온다`() = runTest(main.dispatcher) {
         vm // 만들어질 때 받아 온다
         advanceUntilIdle()

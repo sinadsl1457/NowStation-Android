@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
@@ -46,6 +47,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nowstation.app.BuildConfig
@@ -54,6 +56,7 @@ import com.nowstation.app.core.ui.BrandTint
 import com.nowstation.app.core.ui.Ground
 import com.nowstation.app.core.ui.Hairline
 import com.nowstation.app.core.ui.LineChip
+import com.nowstation.app.core.ui.LineChips
 import com.nowstation.app.core.ui.LineDot
 import com.nowstation.app.core.ui.Muted
 import com.nowstation.app.core.ui.StatusBarIcons
@@ -65,6 +68,7 @@ class HomeActions(
     val onPick: (Station) -> Unit,
     val onEdit: (PickTarget) -> Unit,
     val onClearDestination: () -> Unit,
+    val onSwap: () -> Unit,
     val onStart: () -> Unit,
     val onStartRecent: (RecentRoute) -> Unit,
     val onCloseSearch: () -> Unit,
@@ -154,19 +158,24 @@ private fun RouteCard(state: HomeUiState, actions: HomeActions) {
             .background(Color.White, RoundedCornerShape(22.dp))
             .padding(start = 18.dp, end = 18.dp, top = 8.dp, bottom = 18.dp),
     ) {
-        StationField("타는 역", state.origin, filledDot = true, onClick = { actions.onEdit(PickTarget.ORIGIN) })
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(14.dp)) {
-            Canvas(Modifier.width(12.dp).height(14.dp)) {
-                drawLine(Color(0xFFB8C3D9), Offset(size.width / 2, 0f), Offset(size.width / 2, size.height), 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f)))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                StationField("타는 역", state.origin, filledDot = true, onClick = { actions.onEdit(PickTarget.ORIGIN) })
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(14.dp)) {
+                    Canvas(Modifier.width(12.dp).height(14.dp)) {
+                        drawLine(Color(0xFFB8C3D9), Offset(size.width / 2, 0f), Offset(size.width / 2, size.height), 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 4f)))
+                    }
+                    Spacer(Modifier.width(14.dp))
+                    Box(Modifier.weight(1f).height(1.dp).background(Color(0xFFEEF1F6)))
+                }
+                StationField(
+                    "내릴 역 (선택)", state.destination, filledDot = false,
+                    onClick = { actions.onEdit(PickTarget.DESTINATION) },
+                    onClear = if (state.destination != null) actions.onClearDestination else null,
+                )
             }
-            Spacer(Modifier.width(14.dp))
-            Box(Modifier.weight(1f).height(1.dp).background(Color(0xFFEEF1F6)))
+            SwapButton(enabled = state.canSwap, onClick = actions.onSwap)
         }
-        StationField(
-            "내릴 역 (선택)", state.destination, filledDot = false,
-            onClick = { actions.onEdit(PickTarget.DESTINATION) },
-            onClear = if (state.destination != null) actions.onClearDestination else null,
-        )
         Spacer(Modifier.height(12.dp))
         Button(
             onClick = actions.onStart,
@@ -178,6 +187,18 @@ private fun RouteCard(state: HomeUiState, actions: HomeActions) {
             Spacer(Modifier.width(8.dp))
             Text(if (state.isStarting) "시작하는 중…" else "탑승 시작", fontSize = 17.sp, fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+/** 타는 역 ↔ 내릴 역(퇴근길). 두 칸 사이 오른쪽에 둔다. */
+@Composable
+private fun SwapButton(enabled: Boolean, onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.padding(start = 4.dp).size(40.dp).border(1.dp, Hairline, CircleShape),
+    ) {
+        Icon(Icons.Filled.SwapVert, contentDescription = "타는 역과 내릴 역 바꾸기", tint = if (enabled) Brand else Muted.copy(alpha = 0.4f), modifier = Modifier.size(22.dp))
     }
 }
 
@@ -193,16 +214,21 @@ private fun StationField(label: String, station: Station?, filledDot: Boolean, o
             ),
         )
         Spacer(Modifier.width(14.dp))
-        Column(Modifier.weight(1f)) {
-            Text(label, style = MaterialTheme.typography.labelMedium, color = Muted)
+        // 글자가 먼저 자리를 잡고(한 줄), 칩은 남는 자리 안에서만
+        Column {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = Muted, maxLines = 1, softWrap = false)
             Text(
                 station?.name ?: "고르기",
                 fontSize = 19.sp,
                 fontWeight = if (station != null) FontWeight.Bold else FontWeight.Normal,
                 color = if (station != null) MaterialTheme.colorScheme.onSurface else Muted,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
-        station?.lines?.forEach { Spacer(Modifier.width(4.dp)); LineChip(it) }
+        Box(Modifier.weight(1f).padding(start = 8.dp), contentAlignment = Alignment.CenterEnd) {
+            station?.lines?.let { LineChips(it) }
+        }
         if (onClear != null) IconButton(onClick = onClear) {
             Icon(Icons.Filled.Close, contentDescription = "내릴 역 지우기", tint = Muted, modifier = Modifier.size(18.dp))
         }

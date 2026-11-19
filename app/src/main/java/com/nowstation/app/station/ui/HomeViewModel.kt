@@ -38,6 +38,7 @@ data class HomeUiState(
     val message: String? = null,
 ) {
     val canStart: Boolean get() = origin != null && !isStarting
+    val canSwap: Boolean get() = (origin != null || destination != null) && !isStarting
 }
 
 /** 홈: 역을 검색해 출발역(과 내릴 역)을 고르고 탑승을 시작한다. */
@@ -94,6 +95,9 @@ class HomeViewModel @Inject constructor(
     }
 
     fun clearDestination() = _state.update { it.copy(destination = null) }
+
+    /** 타는 역과 내릴 역을 바꾼다(태평 → 강남으로 출근했으면 퇴근길은 강남 → 태평). */
+    fun swap() = _state.update { it.copy(origin = it.destination, destination = it.origin) }
 
     fun dismissMessage() = _state.update { it.copy(message = null) }
 

@@ -7,6 +7,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -74,7 +80,34 @@ fun LineChip(line: String, modifier: Modifier = Modifier, onDark: Boolean = fals
             .padding(horizontal = 10.dp, vertical = 4.dp),
     ) {
         LineDot(line)
-        Text(line, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = if (onDark) Color.White else Ink)
+        // 칩은 줄어들거나 줄바꿈하지 않는다(좁으면 LineChips가 색 점으로 바꾼다)
+        Text(line, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = if (onDark) Color.White else Ink, maxLines = 1, softWrap = false)
+    }
+}
+
+/**
+ * 한 역의 노선 칩들. [maxWidth]와 받은 자리 안에 다 들어가면 칩으로, 아니면 노선 색 점만 보여 준다.
+ * 역 이름·"내릴 역 (선택)" 글자가 칩에 밀려 두 줄로 깨지지 않게(iOS LineChips와 같은 규칙).
+ */
+@Composable
+fun LineChips(lines: List<String>, modifier: Modifier = Modifier, maxWidth: Dp = 190.dp) {
+    SubcomposeLayout(modifier.widthIn(max = maxWidth)) { constraints ->
+        val free = Constraints()
+        val full = subcompose("chips") {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) { lines.forEach { LineChip(it) } }
+        }.first().measure(free)
+        val shown = if (full.width <= constraints.maxWidth) full else subcompose("dots") {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .background(Color.White, RoundedCornerShape(50))
+                    .border(1.dp, Hairline, RoundedCornerShape(50))
+                    .padding(horizontal = 8.dp, vertical = 7.dp)
+                    .semantics(mergeDescendants = true) { contentDescription = lines.joinToString(", ") },
+            ) { lines.forEach { LineDot(it, size = 10) } }
+        }.first().measure(free)
+        layout(shown.width, shown.height) { shown.place(0, 0) }
     }
 }
 
