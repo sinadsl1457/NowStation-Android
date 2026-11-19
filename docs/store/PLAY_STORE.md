@@ -51,7 +51,7 @@
 |---|---|
 | 앱 아이콘 512×512 | `icon-512.png` |
 | 그래픽 이미지 1024×500 | `feature-1024x500.png` |
-| 휴대전화 스크린샷(2:1) | `phone-0-home.png` 홈(역 고르기) · `phone-1.png` 탑승 중 · `phone-2.png` 내릴 역 직전 · `phone-3.png` 다른 앱 위 알림 · `phone-4.png` 잠금화면 · `phone-5.png` 알림창 |
+| 휴대전화 스크린샷(1200×2400, 2:1, 이 순서로) | `phone-1-home.png` 홈 · `phone-2-search.png` 역 검색 · `phone-3-riding.png` 탑승 중 · `phone-4-alight.png` 내릴 준비 · `phone-5-over-app.png` 다른 앱 위 알림 · `phone-6-lockscreen.png` 잠금화면 · `phone-7-shade.png` 알림창 |
 
 **분류:** 앱 카테고리 `지도/내비게이션`, 태그는 대중교통 관련
 
