@@ -98,7 +98,7 @@ fun RideScreen(
     val askEnd = { confirming = true }
     AnimatedContent(
         // 파란 전체 화면은 최종 내릴 역에서만. 환승역은 알림·진동과 안내 띠로(사용자 결정)
-        targetState = ride.view.prepareToAlight && !RideTexts.isTransfer(ride),
+        targetState = RideTexts.showsAlightScreen(ride),
         transitionSpec = { (slideInVertically(tween(450)) { it / 3 } + fadeIn(tween(300))) togetherWith fadeOut(tween(200)) },
         label = "alight",
     ) { alight ->
@@ -313,7 +313,7 @@ private const val RIPPLE_SPREAD = 1300
 /** 따라가는 열차와 환승 안내. iOS BannerView와 같은 색. */
 @Composable
 private fun Banner(ride: ActiveRide) {
-    val warn = ride.view.notice == RideNoticeKind.TRANSFER
+    val warn = ride.view.notice == RideNoticeKind.TRANSFER || ride.view.prepareToAlight
     val fg = if (warn) Color(0xFFB45309) else Brand
     val bg = if (warn) Color(0xFFFFF4E5) else BrandTint
     Text(

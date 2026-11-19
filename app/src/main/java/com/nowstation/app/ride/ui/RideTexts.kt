@@ -86,9 +86,23 @@ object RideTexts {
         return target != destination
     }
 
-    /** 화면 위 안내 띠: 따라가는 열차, 환승역 도착. 고른 열차는 그대로 따라간다(탔으면 가는 것). iOS와 같은 문구. */
+    /**
+     * 파란 전체 화면을 띄울 때: 내릴 역에 다다랐거나 도착. 한 정거장 전(알림만 켜짐)에는 띄우지 않는다
+     * (태평 → 야탑에서 모란에 들어서자마자 전체 화면이 떠 "이번 정거장 모란"을 못 봤다). 환승역은 띄우지 않는다.
+     */
+    fun showsAlightScreen(ride: ActiveRide): Boolean {
+        val v = ride.view
+        if (v.status == RideStatus.ARRIVED) return true
+        return v.prepareToAlight && !isTransfer(ride) && v.thisStation == (v.target ?: v.thisStation)
+    }
+
+    /** 화면 위 안내 띠: 따라가는 열차, 한 정거장 전 내릴·갈아탈 준비, 환승역 도착. iOS와 같은 문구. */
     fun banner(ride: ActiveRide): String {
         val v = ride.view
+        val target = v.target
+        if (v.prepareToAlight && target != null && v.thisStation != target) {
+            return if (isTransfer(ride)) "다음 역 $target, 갈아탈 준비하세요" else "다음 역 $target, 내릴 준비하세요"
+        }
         val no = v.trainNo ?: return "탄 열차를 아래 노선도에서 골라 주세요"
         if (v.notice == RideNoticeKind.TRANSFER) {
             return "갈아타세요: ${v.line.orEmpty()} ${v.target.orEmpty()} 방면 $no 열차를 골라 뒀어요. 다른 열차면 아래에서 눌러 주세요"
