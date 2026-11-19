@@ -45,7 +45,7 @@ class RideNotifications @Inject constructor(@ApplicationContext private val cont
         NotificationCompat.Builder(context, ALIGHT_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_train)
             .setContentTitle(RideTexts.title(ride))
-            .setContentText(RideTexts.detail(ride))
+            .setContentText(RideTexts.remaining(ride) ?: RideTexts.detail(ride))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

@@ -6,7 +6,11 @@ import com.nowstation.app.ride.domain.Motion
 import com.nowstation.app.ride.domain.RideRepository
 import com.nowstation.app.ride.domain.RideStatus
 import com.nowstation.app.ride.domain.RideView
-import com.nowstation.app.ride.domain.TrainChoice
+import com.nowstation.app.ride.domain.RideLeg
+import com.nowstation.app.ride.domain.RideNoticeKind
+import com.nowstation.app.ride.domain.StripTrain
+import com.nowstation.app.ride.domain.TrainStrip
+import retrofit2.HttpException
 import java.time.Instant
 import javax.inject.Inject
 
@@ -21,8 +25,15 @@ class RideRepositoryImpl @Inject constructor(private val api: RideApi) : RideRep
             api.motion(rideId, MotionRequest(motions.map { MotionItem(it.kind.name, it.at.toString()) }, sentAt.toString())).toDomain()
         }
 
-    override suspend fun trains(rideId: String): AppResult<List<TrainChoice>> = safeApiCall {
-        api.trains(rideId).map { TrainChoice(it.line, it.trainNo, it.station, it.status, it.terminal, it.seenSecondsAgo) }
+    override suspend fun strip(rideId: String): AppResult<TrainStrip?> = safeApiCall {
+        val response = api.strip(rideId)
+        if (!response.isSuccessful) throw HttpException(response)
+        response.body()?.let { d ->
+            TrainStrip(
+                RideLeg(d.leg.line, d.leg.from, d.leg.to), d.stations, d.boardIndex,
+                d.trains.map { StripTrain(it.trainNo, it.station, it.status, it.terminal, it.selected, it.seenSecondsAgo) },
+            )
+        }
     }
 
     override suspend fun choose(rideId: String, line: String, trainNo: String): AppResult<RideView> =
@@ -39,4 +50,10 @@ internal fun RideDto.toDomain() = RideView(
     thisStation = thisStation,
     nextStation = nextStation,
     prepareToAlight = prepareToAlight,
+    legs = legs.map { RideLeg(it.line, it.from, it.to) },
+    trainNo = trainNo,
+    confirmed = confirmed,
+    target = target,
+    remainingStops = remainingStops,
+    notice = RideNoticeKind.entries.firstOrNull { it.name == notice },
 )

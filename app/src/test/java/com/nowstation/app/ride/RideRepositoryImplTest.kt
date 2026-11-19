@@ -1,6 +1,9 @@
 package com.nowstation.app.ride
 
-import com.nowstation.app.ride.domain.TrainChoice
+import com.nowstation.app.ride.domain.RideLeg
+import com.nowstation.app.ride.domain.RideNoticeKind
+import com.nowstation.app.ride.domain.StripTrain
+import com.nowstation.app.ride.domain.TrainStrip
 import com.nowstation.app.core.result.AppError
 import com.nowstation.app.core.result.AppResult
 import com.nowstation.app.ride.data.RideApi
@@ -77,18 +80,23 @@ class RideRepositoryImplTest {
     }
 
     @Test
-    fun `고를 열차 목록과 고르기는 서버 경로·모양 그대로`() = runTest {
-        server.enqueue(MockResponse().setBody("""[{"line":"수인분당선","trainNo":"6050","station":"가천대","status":"ARRIVED","terminal":"왕십리","seenSecondsAgo":12}]"""))
-        server.enqueue(MockResponse().setBody("""{"rideId":"r1","status":"AT_STATION","line":"수인분당선","thisStation":"가천대","nextStation":"복정","prepareToAlight":false}"""))
+    fun `노선도와 고르기는 서버 경로·모양 그대로, 경로가 없으면(204) null`() = runTest {
+        server.enqueue(MockResponse().setBody("""{"leg":{"line":"수인분당선","from":"태평","to":"선릉"},"stations":["모란","태평","가천대"],"boardIndex":1,"trains":[{"trainNo":"6206","station":"모란","status":"ARRIVED","terminal":"왕십리","selected":true,"seenSecondsAgo":12}]}"""))
+        server.enqueue(MockResponse().setResponseCode(204))
+        server.enqueue(MockResponse().setBody("""{"rideId":"r1","status":"AT_STATION","line":"수인분당선","thisStation":"모란","legs":[{"line":"수인분당선","from":"태평","to":"선릉"}],"trainNo":"6208","confirmed":false,"target":"선릉","remainingStops":10,"notice":"MISSED"}"""))
 
-        val trains = (repo.trains("r1") as AppResult.Success).data
-        assertEquals(listOf(TrainChoice("수인분당선", "6050", "가천대", "ARRIVED", "왕십리", 12)), trains)
+        val strip = (repo.strip("r1") as AppResult.Success).data!!
+        assertEquals(TrainStrip(RideLeg("수인분당선", "태평", "선릉"), listOf("모란", "태평", "가천대"), 1, listOf(StripTrain("6206", "모란", "ARRIVED", "왕십리", true, 12))), strip)
         assertEquals("/api/rides/r1/trains", server.takeRequest().path)
+        assertEquals(AppResult.Success(null), repo.strip("r1"))
+        server.takeRequest()
 
-        val view = (repo.choose("r1", "수인분당선", "6050") as AppResult.Success).data
-        assertEquals("가천대", view.thisStation)
+        val view = (repo.choose("r1", "수인분당선", "6208") as AppResult.Success).data
+        assertEquals("6208", view.trainNo)
+        assertEquals(10, view.remainingStops)
+        assertEquals(RideNoticeKind.MISSED, view.notice)
         val request = server.takeRequest()
         assertEquals("/api/rides/r1/train", request.path)
-        assertEquals("""{"line":"수인분당선","trainNo":"6050"}""", request.body.readUtf8())
+        assertEquals("""{"line":"수인분당선","trainNo":"6208"}""", request.body.readUtf8())
     }
 }

@@ -27,8 +27,6 @@ data class ActiveRide(
     val unsentMotions: Int = 0,
     /** 탑승을 시작한 시각(화면에 "08:42 탑승"). */
     val startedAt: Instant? = null,
-    /** 탄 열차를 고르는 중(시작 직후). 고르거나 "모르겠어요"면 false. */
-    val choosing: Boolean = false,
 ) {
     companion object {
         /** 내릴 역 알림이 막 켜졌나. 환승 뒤 다시 켜지면 또 울린다. */
@@ -69,33 +67,28 @@ class RideTracker @Inject constructor(
         if (result is AppResult.Success) {
             pending.value = emptyList()
             val now = Instant.now(clock)
-            _state.value = ActiveRide(origin, destination, result.data, online = true, updatedAt = now, startedAt = now, choosing = true)
+            _state.value = ActiveRide(origin, destination, result.data, online = true, updatedAt = now, startedAt = now)
         }
         return result
     }
 
-    /** 고를 열차 후보. 고르는 화면이 15초마다 부른다. */
-    suspend fun trains(): AppResult<List<TrainChoice>> {
-        val ride = _state.value ?: return AppResult.Success(emptyList())
-        return repository.trains(ride.view.rideId)
+    /** 가로 노선도. 탑승 화면이 15초마다 부른다. */
+    suspend fun strip(): AppResult<TrainStrip?> {
+        val ride = _state.value ?: return AppResult.Success(null)
+        return repository.strip(ride.view.rideId)
     }
 
-    /** 고른 열차에 바로 탄다. */
-    suspend fun choose(train: TrainChoice): AppResult<RideView> {
+    /** 노선도에서 다른 열차를 고른다(골라 둔 열차가 틀렸을 때). */
+    suspend fun choose(train: StripTrain, line: String): AppResult<RideView> {
         val ride = _state.value ?: return AppResult.Error(AppError.NotFound)
-        val result = repository.choose(ride.view.rideId, train.line, train.trainNo)
+        val result = repository.choose(ride.view.rideId, line, train.trainNo)
         if (result is AppResult.Success) {
             _state.update {
                 if (it?.view?.rideId != ride.view.rideId) it
-                else it.copy(view = result.data, choosing = false, online = true, updatedAt = Instant.now(clock))
+                else it.copy(view = result.data, online = true, updatedAt = Instant.now(clock))
             }
         }
         return result
-    }
-
-    /** "모르겠어요": 고르지 않고 폰 움직임으로 찾게 둔다. */
-    fun skipChoosing() {
-        _state.update { it?.copy(choosing = false) }
     }
 
     /** 포그라운드 서비스가 몇 초마다 부른다. 못 보낸 움직임이 있으면 그것부터 보낸다. */

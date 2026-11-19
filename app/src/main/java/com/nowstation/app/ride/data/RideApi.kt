@@ -1,6 +1,7 @@
 package com.nowstation.app.ride.data
 
 import kotlinx.serialization.Serializable
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
@@ -15,8 +16,9 @@ interface RideApi {
     @POST("api/rides/{id}/motion")
     suspend fun motion(@Path("id") id: String, @Body request: MotionRequest): RideDto
 
+    /** 경로가 없으면 204. */
     @GET("api/rides/{id}/trains")
-    suspend fun trains(@Path("id") id: String): List<TrainChoiceDto>
+    suspend fun strip(@Path("id") id: String): Response<TrainStripDto>
 
     @POST("api/rides/{id}/train")
     suspend fun choose(@Path("id") id: String, @Body request: ChooseTrainRequest): RideDto
@@ -38,12 +40,18 @@ data class MotionRequest(val events: List<MotionItem>, val sentAt: String)
 data class MotionItem(val kind: String, val at: String)
 
 @Serializable
-data class TrainChoiceDto(
-    val line: String,
+data class LegDto(val line: String, val from: String, val to: String)
+
+@Serializable
+data class TrainStripDto(val leg: LegDto, val stations: List<String>, val boardIndex: Int, val trains: List<StripTrainDto>)
+
+@Serializable
+data class StripTrainDto(
     val trainNo: String,
     val station: String,
     val status: String,
     val terminal: String? = null,
+    val selected: Boolean = false,
     val seenSecondsAgo: Long = 0,
 )
 
@@ -58,4 +66,10 @@ data class RideDto(
     val thisStation: String? = null,
     val nextStation: String? = null,
     val prepareToAlight: Boolean = false,
+    val legs: List<LegDto> = emptyList(),
+    val trainNo: String? = null,
+    val confirmed: Boolean = false,
+    val target: String? = null,
+    val remainingStops: Int? = null,
+    val notice: String? = null,
 )

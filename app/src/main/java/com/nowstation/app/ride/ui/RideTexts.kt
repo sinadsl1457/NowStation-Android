@@ -2,7 +2,8 @@ package com.nowstation.app.ride.ui
 
 import com.nowstation.app.ride.domain.ActiveRide
 import com.nowstation.app.ride.domain.RideStatus
-import com.nowstation.app.ride.domain.TrainChoice
+import com.nowstation.app.ride.domain.RideNoticeKind
+import com.nowstation.app.ride.domain.StripTrain
 
 /** 화면과 잠금화면 알림이 같은 문구를 쓰도록 한곳에 둔다. */
 object RideTexts {
@@ -55,16 +56,26 @@ object RideTexts {
         }
     }
 
-    /** 고를 열차 한 줄: "가천대 도착". 공공 데이터 상태 그대로(수인분당선은 출발을 주지 않는다). iOS와 같은 문구. */
-    fun trainPlace(t: TrainChoice): String = when (t.status) {
-        "ENTERING" -> "${t.station} 진입 중"
-        "ARRIVED" -> "${t.station} 도착"
-        "DEPARTED" -> "${t.station} 출발"
-        else -> t.station
+    /** "선릉까지 6정거장". 구간 끝(환승역·내릴 역)까지. 모르면 null. iOS와 같은 문구. */
+    fun remaining(ride: ActiveRide): String? {
+        val target = ride.view.target ?: return null
+        val n = ride.view.remainingStops ?: return null
+        return if (n == 0) "이번 역이 ${target}이에요" else "${target}까지 ${n}정거장"
     }
 
-    fun trainTerminal(t: TrainChoice): String? = t.terminal?.let { "${it}행" }
+    /** 노선도 위 열차 이름표: "왕십리행". */
+    fun terminal(t: StripTrain): String = t.terminal?.let { "${it}행" } ?: ""
 
-    /** 목록이 얼마나 오래된 정보인지(공공 데이터가 늦어 한두 정거장 뒤로 보일 수 있음). */
-    fun seenAgo(seconds: Long): String = if (seconds < 60) "${seconds}초 전 기준" else "${seconds / 60}분 전 기준"
+    /** 화면 위 안내 띠. 골라 둔 열차를 폰이 확인했는지, 놓쳤는지를 알려 준다(이번정거장에 없는 부분). */
+    fun banner(ride: ActiveRide): String {
+        val v = ride.view
+        val no = v.trainNo.orEmpty()
+        return when {
+            v.notice == RideNoticeKind.MISSED -> "열차를 놓치신 것 같아요. 다음 열차(${no})로 바꿨어요"
+            v.notice == RideNoticeKind.SWITCHED -> "폰과 같이 출발한 $no 열차로 바꿨어요"
+            v.trainNo == null -> "탄 열차를 아래 노선도에서 골라 주세요"
+            v.confirmed -> "$no 열차 탑승 확인"
+            else -> "$no 열차를 골라 뒀어요. 다른 열차면 아래에서 눌러 주세요"
+        }
+    }
 }

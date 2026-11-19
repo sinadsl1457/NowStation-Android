@@ -1,5 +1,18 @@
 package com.nowstation.app.ride.ui
 
+import com.nowstation.app.ride.domain.TrainStrip
+import com.nowstation.app.ride.domain.StripTrain
+import com.nowstation.app.ride.domain.RideLeg
+import com.nowstation.app.core.ui.lineColor
+import com.nowstation.app.core.ui.LineBadge
+import com.nowstation.app.core.ui.Ink
+import androidx.compose.ui.platform.testTag
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.clickable
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -72,7 +85,13 @@ import java.time.format.DateTimeFormatter
 
 /** 탑승 중. 내릴 역 직전이면 화면 전체를 파랑으로 바꿔 주머니에서 꺼냈을 때 바로 알아보게 한다. */
 @Composable
-fun RideScreen(ride: ActiveRide, onEnd: () -> Unit) {
+fun RideScreen(
+    ride: ActiveRide,
+    strip: TrainStrip? = null,
+    picking: String? = null,
+    onPick: (StripTrain) -> Unit = {},
+    onEnd: () -> Unit,
+) {
     // 끝내기는 되돌릴 수 없어서(현재역 표시·내릴 역 알림이 멈춤) 한 번 더 묻는다
     var confirming by rememberSaveable { mutableStateOf(false) }
     val askEnd = { confirming = true }
@@ -81,7 +100,7 @@ fun RideScreen(ride: ActiveRide, onEnd: () -> Unit) {
         transitionSpec = { (slideInVertically(tween(450)) { it / 3 } + fadeIn(tween(300))) togetherWith fadeOut(tween(200)) },
         label = "alight",
     ) { alight ->
-        if (alight) AlightContent(ride, askEnd) else RidingContent(ride, askEnd)
+        if (alight) AlightContent(ride, askEnd) else RidingContent(ride, strip, picking, onPick, askEnd)
     }
     if (confirming) {
         AlertDialog(
@@ -98,7 +117,7 @@ fun RideScreen(ride: ActiveRide, onEnd: () -> Unit) {
 }
 
 @Composable
-private fun RidingContent(ride: ActiveRide, onEnd: () -> Unit) {
+private fun RidingContent(ride: ActiveRide, strip: TrainStrip?, picking: String?, onPick: (StripTrain) -> Unit, onEnd: () -> Unit) {
     StatusBarIcons(dark = true)
     val v = ride.view
     val waiting = v.status == RideStatus.WAITING
@@ -112,21 +131,24 @@ private fun RidingContent(ride: ActiveRide, onEnd: () -> Unit) {
             StatusPill(ride)
         }
 
+        Banner(ride)
+
         Column(Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(24.dp)).padding(22.dp)) {
             Text(
                 when {
                     waiting -> "기다리는 역"
                     v.thisStation == null -> "위치 확인 중"
-                    else -> "이번 역"
+                    else -> "이번 정거장은"
                 },
                 style = MaterialTheme.typography.titleSmall, color = Muted,
             )
             Text(v.thisStation ?: ride.origin, fontSize = 60.sp, lineHeight = 70.sp, fontWeight = FontWeight.Black)
             Spacer(Modifier.height(4.dp))
-            Text(RideTexts.detail(ride), style = MaterialTheme.typography.bodyLarge, color = Color(0xFF2A3348))
+            Text(RideTexts.remaining(ride) ?: RideTexts.detail(ride), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, color = Color(0xFF2A3348))
         }
 
-        RouteCard(ride)
+        if (v.legs.isNotEmpty()) LegChips(v.legs, v.line)
+        if (strip != null) StripCard(strip, picking, onPick) else RouteCard(ride)
 
         Spacer(Modifier.weight(1f))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 6.dp)) {
@@ -278,3 +300,89 @@ private fun Ripple() {
 
 private const val RIPPLE_PERIOD = 3000
 private const val RIPPLE_SPREAD = 1300
+
+/** 골라 둔 열차를 폰이 확인했는지·놓쳤는지(이번정거장은 고른 열차를 그대로 따라가기만 한다). iOS BannerView와 같은 색. */
+@Composable
+private fun Banner(ride: ActiveRide) {
+    val v = ride.view
+    val ok = v.confirmed && v.notice == null
+    val warn = v.notice != null
+    val fg = if (ok) Color(0xFF14804A) else if (warn) Color(0xFFB45309) else Brand
+    val bg = if (ok) Color(0xFFE7F6EE) else if (warn) Color(0xFFFFF4E5) else BrandTint
+    Text(
+        (if (ok) "✓ " else if (warn) "↻ " else "☝ ") + RideTexts.banner(ride),
+        color = fg, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.fillMaxWidth().background(bg, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 10.dp).testTag("ride-banner"),
+    )
+}
+
+/** 경로 구간: "태평 ▶ 선릉" "선릉 ▶ 강남". 지금 구간을 칠한다. */
+@Composable
+private fun LegChips(legs: List<RideLeg>, current: String?) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        legs.forEach { leg ->
+            val on = leg.line == current
+            val c = lineColor(leg.line)
+            Row(
+                Modifier.background(if (on) c else Color.White, CircleShape).border(1.5.dp, if (on) Color.Transparent else c, CircleShape)
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LineBadge(leg.line, size = 18.dp)
+                Spacer(Modifier.width(4.dp))
+                Text("${leg.from} ▶ ${leg.to}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = if (on) Color.White else Ink)
+            }
+        }
+    }
+}
+
+/** 가로 노선도(이번정거장 4708과 같은 배치): 역이 한 줄로 늘어서고 그 위에 열차. 골라 둔 열차는 칠하고, 다른 열차를 누르면 그 열차로. */
+@Composable
+private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) -> Unit) {
+    val listState = rememberLazyListState()
+    val focus = strip.trains.firstOrNull { it.selected }?.let { strip.stations.indexOf(it.station) }?.takeIf { it >= 0 } ?: strip.boardIndex
+    LaunchedEffect(strip.leg, focus) { listState.scrollToItem((focus - 2).coerceAtLeast(0)) }
+    val c = lineColor(strip.leg.line)
+    Column(Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(24.dp)).padding(16.dp)) {
+        Row {
+            Text("${strip.leg.from} → ${strip.leg.to} 방향 열차", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Ink)
+            Spacer(Modifier.weight(1f))
+            strip.trains.minOfOrNull { it.seenSecondsAgo }?.let { Text("${it}초 전 기준", fontSize = 12.sp, color = Muted) }
+        }
+        Spacer(Modifier.height(10.dp))
+        // 열차가 있는 칸과 없는 칸의 역 줄이 같은 높이에 오게 아래로 맞춘다
+        LazyRow(state = listState, verticalAlignment = Alignment.Bottom) {
+            itemsIndexed(strip.stations) { i, name ->
+                val board = i == strip.boardIndex
+                Column(Modifier.width(76.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(Modifier.height(80.dp), verticalArrangement = Arrangement.Bottom) {
+                        strip.trains.filter { it.station == name }.forEach { t ->
+                            Column(
+                                Modifier.width(66.dp)
+                                    .background(if (t.selected) c else Color.White, RoundedCornerShape(10.dp))
+                                    .border(1.5.dp, if (t.selected) Color.Transparent else Color(0xFFC9D1E0), RoundedCornerShape(10.dp))
+                                    .clickable(enabled = picking == null && !t.selected) { onPick(t) }
+                                    .padding(vertical = 5.dp)
+                                    .testTag("train-${t.trainNo}"),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                val fg = if (t.selected) Color.White else Ink
+                                Text(RideTexts.terminal(t), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = fg)
+                                if (picking == t.trainNo) CircularProgressIndicator(Modifier.size(14.dp), strokeWidth = 2.dp, color = fg)
+                                else Text(t.trainNo, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = fg)
+                                Text("🚆", fontSize = 12.sp)
+                            }
+                            Spacer(Modifier.height(6.dp))
+                        }
+                    }
+                    Box(Modifier.fillMaxWidth().height(18.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.fillMaxWidth().height(3.dp).background(Color(0xFFC9D1E0)))
+                        Box(Modifier.size(if (board) 16.dp else 10.dp).background(if (board) c else Color(0xFFC9D1E0), CircleShape))
+                    }
+                    Text(name, fontSize = 13.sp, fontWeight = if (board) FontWeight.ExtraBold else FontWeight.Normal, color = if (board) c else Ink, maxLines = 1)
+                }
+            }
+        }
+    }
+}
+

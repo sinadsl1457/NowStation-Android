@@ -1,6 +1,7 @@
 package com.nowstation.app.ride
 
-import com.nowstation.app.ride.domain.TrainChoice
+import com.nowstation.app.ride.domain.RideNoticeKind
+import com.nowstation.app.ride.domain.StripTrain
 import com.nowstation.app.ride.domain.ActiveRide
 import com.nowstation.app.ride.domain.RideStatus
 import com.nowstation.app.ride.domain.RideView
@@ -55,12 +56,13 @@ class RideTextsTest {
     }
 
     @Test
-    fun `고를 열차 문구는 iOS와 같다`() {
-        val t = TrainChoice("수인분당선", "6050", "가천대", "ARRIVED", "왕십리", 12)
-        assertEquals("가천대 도착", RideTexts.trainPlace(t))
-        assertEquals("가천대 진입 중", RideTexts.trainPlace(t.copy(status = "ENTERING")))
-        assertEquals("왕십리행", RideTexts.trainTerminal(t))
-        assertEquals("12초 전 기준", RideTexts.seenAgo(12))
-        assertEquals("2분 전 기준", RideTexts.seenAgo(130))
+    fun `안내 띠와 남은 정거장 문구는 iOS와 같다`() {
+        fun r(v: com.nowstation.app.ride.domain.RideView) = ride(v)
+        val base = view(RideStatus.AT_STATION, "모란")
+        assertEquals("6206 열차를 골라 뒀어요. 다른 열차면 아래에서 눌러 주세요", RideTexts.banner(r(base.copy(trainNo = "6206"))))
+        assertEquals("6206 열차 탑승 확인", RideTexts.banner(r(base.copy(trainNo = "6206", confirmed = true))))
+        assertEquals("열차를 놓치신 것 같아요. 다음 열차(6208)로 바꿨어요", RideTexts.banner(r(base.copy(trainNo = "6208", notice = RideNoticeKind.MISSED))))
+        assertEquals("선릉까지 6정거장", RideTexts.remaining(r(base.copy(target = "선릉", remainingStops = 6))))
+        assertEquals("왕십리행", RideTexts.terminal(StripTrain("6206", "모란", "ARRIVED", "왕십리", true, 3)))
     }
 }
