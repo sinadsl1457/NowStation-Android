@@ -56,13 +56,15 @@ class RideTextsTest {
     }
 
     @Test
-    fun `안내 띠와 남은 정거장 문구는 iOS와 같다`() {
-        fun r(v: com.nowstation.app.ride.domain.RideView) = ride(v)
+    fun `안내 띠·환승 문구는 iOS와 같다`() {
+        fun r(v: com.nowstation.app.ride.domain.RideView) = ride(v).copy(destination = "강남")
         val base = view(RideStatus.AT_STATION, "모란")
-        assertEquals("6206 열차를 골라 뒀어요. 다른 열차면 아래에서 눌러 주세요", RideTexts.banner(r(base.copy(trainNo = "6206"))))
-        assertEquals("6206 열차 탑승 확인", RideTexts.banner(r(base.copy(trainNo = "6206", confirmed = true))))
-        assertEquals("열차를 놓치신 것 같아요. 다음 열차(6208)로 바꿨어요", RideTexts.banner(r(base.copy(trainNo = "6208", notice = RideNoticeKind.MISSED))))
+        assertEquals("6206 열차를 따라가고 있어요. 다른 열차면 아래에서 눌러 주세요", RideTexts.banner(r(base.copy(trainNo = "6206"))))
+        assertEquals("갈아타세요: 2호선 강남 방면 3154 열차를 골라 뒀어요. 다른 열차면 아래에서 눌러 주세요",
+            RideTexts.banner(r(base.copy(line = "2호선", trainNo = "3154", target = "강남", notice = RideNoticeKind.TRANSFER))))
         assertEquals("선릉까지 6정거장", RideTexts.remaining(r(base.copy(target = "선릉", remainingStops = 6))))
+        assertEquals("곧 선릉, 갈아탈 준비하세요", RideTexts.title(r(view(RideStatus.MOVING, "선릉", alight = true).copy(target = "선릉"))))
+        assertEquals("곧 강남, 내릴 준비하세요", RideTexts.title(r(view(RideStatus.MOVING, "강남", alight = true).copy(target = "강남"))))
         assertEquals("왕십리행", RideTexts.terminal(StripTrain("6206", "모란", "ARRIVED", "왕십리", true, 3)))
     }
 }

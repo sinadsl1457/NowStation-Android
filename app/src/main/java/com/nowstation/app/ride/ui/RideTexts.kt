@@ -11,7 +11,7 @@ object RideTexts {
     fun title(ride: ActiveRide): String {
         val v = ride.view
         return when {
-            v.prepareToAlight && v.thisStation != null -> "곧 ${v.thisStation}, 내릴 준비하세요"
+            v.prepareToAlight && v.thisStation != null -> if (isTransfer(ride)) "곧 ${v.thisStation}, 갈아탈 준비하세요" else "곧 ${v.thisStation}, 내릴 준비하세요"
             v.status == RideStatus.WAITING -> "${v.thisStation ?: ride.origin}역에서 기다리는 중"
             v.status == RideStatus.STALE || v.thisStation == null -> "위치 확인 중"
             else -> "이번 역 ${v.thisStation}"
@@ -66,16 +66,20 @@ object RideTexts {
     /** 노선도 위 열차 이름표: "왕십리행". */
     fun terminal(t: StripTrain): String = t.terminal?.let { "${it}행" } ?: ""
 
-    /** 화면 위 안내 띠. 골라 둔 열차를 폰이 확인했는지, 놓쳤는지를 알려 준다(이번정거장에 없는 부분). */
+    /** 이번 구간 끝이 갈아탈 역인가(내릴 역이 아니라). */
+    fun isTransfer(ride: ActiveRide): Boolean {
+        val target = ride.view.target ?: return false
+        val destination = ride.destination ?: return false
+        return target != destination
+    }
+
+    /** 화면 위 안내 띠: 따라가는 열차, 환승역 도착. 고른 열차는 그대로 따라간다(탔으면 가는 것). iOS와 같은 문구. */
     fun banner(ride: ActiveRide): String {
         val v = ride.view
-        val no = v.trainNo.orEmpty()
-        return when {
-            v.notice == RideNoticeKind.MISSED -> "열차를 놓치신 것 같아요. 다음 열차(${no})로 바꿨어요"
-            v.notice == RideNoticeKind.SWITCHED -> "폰과 같이 출발한 $no 열차로 바꿨어요"
-            v.trainNo == null -> "탄 열차를 아래 노선도에서 골라 주세요"
-            v.confirmed -> "$no 열차 탑승 확인"
-            else -> "$no 열차를 골라 뒀어요. 다른 열차면 아래에서 눌러 주세요"
+        val no = v.trainNo ?: return "탄 열차를 아래 노선도에서 골라 주세요"
+        if (v.notice == RideNoticeKind.TRANSFER) {
+            return "갈아타세요: ${v.line.orEmpty()} ${v.target.orEmpty()} 방면 $no 열차를 골라 뒀어요. 다른 열차면 아래에서 눌러 주세요"
         }
+        return "$no 열차를 따라가고 있어요. 다른 열차면 아래에서 눌러 주세요"
     }
 }

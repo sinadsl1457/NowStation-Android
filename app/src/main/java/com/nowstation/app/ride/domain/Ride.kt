@@ -15,8 +15,6 @@ data class RideView(
     val legs: List<RideLeg> = emptyList(),
     /** 따라가는(골라 둔) 열차 번호. */
     val trainNo: String? = null,
-    /** false면 골라 두기만 한 열차(타는 역을 떠날 때 폰과 맞춰 확정). */
-    val confirmed: Boolean = false,
     /** 이번 구간 끝(환승역·내릴 역)과 남은 정거장. */
     val target: String? = null,
     val remainingStops: Int? = null,
@@ -25,8 +23,8 @@ data class RideView(
 
 data class RideLeg(val line: String, val from: String, val to: String)
 
-/** MISSED: 골라 둔 열차를 놓쳐 다음 열차로 바꿈, SWITCHED: 폰과 같이 출발한 다른 열차로 바꿈. */
-enum class RideNoticeKind { MISSED, SWITCHED }
+/** TRANSFER: 환승역에 도착(다음 구간 열차를 골라 둠). */
+enum class RideNoticeKind { TRANSFER }
 
 enum class RideStatus {
     /** 역에서 열차를 기다림(처음, 열차 놓침, 환승 중) */

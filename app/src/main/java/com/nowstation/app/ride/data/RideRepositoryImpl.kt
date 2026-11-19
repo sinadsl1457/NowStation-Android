@@ -52,7 +52,6 @@ internal fun RideDto.toDomain() = RideView(
     prepareToAlight = prepareToAlight,
     legs = legs.map { RideLeg(it.line, it.from, it.to) },
     trainNo = trainNo,
-    confirmed = confirmed,
     target = target,
     remainingStops = remainingStops,
     notice = RideNoticeKind.entries.firstOrNull { it.name == notice },

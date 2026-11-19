@@ -3,6 +3,7 @@ package com.nowstation.app.ride.ui
 import com.nowstation.app.ride.domain.TrainStrip
 import com.nowstation.app.ride.domain.StripTrain
 import com.nowstation.app.ride.domain.RideLeg
+import com.nowstation.app.ride.domain.RideNoticeKind
 import com.nowstation.app.core.ui.lineColor
 import com.nowstation.app.core.ui.LineBadge
 import com.nowstation.app.core.ui.Ink
@@ -233,7 +234,7 @@ private fun AlightContent(ride: ActiveRide, onEnd: () -> Unit) {
         ) {
             Ripple()
             Spacer(Modifier.height(18.dp))
-            Text("내릴 준비하세요", fontSize = 30.sp, fontWeight = FontWeight.Black, color = Color.White)
+            Text(if (RideTexts.isTransfer(ride)) "갈아탈 준비하세요" else "내릴 준비하세요", fontSize = 30.sp, fontWeight = FontWeight.Black, color = Color.White)
             Spacer(Modifier.height(10.dp))
             Text("이번 역", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.85f))
             Text(
@@ -241,10 +242,15 @@ private fun AlightContent(ride: ActiveRide, onEnd: () -> Unit) {
                 fontSize = 76.sp, lineHeight = 88.sp, fontWeight = FontWeight.Black, color = Color.White,
                 modifier = Modifier.scale(grow.value),
             )
-            Text("내리실 역이에요", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.9f))
+            Text(if (RideTexts.isTransfer(ride)) "여기서 갈아타세요" else "내리실 역이에요", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.9f))
             v.nextStation?.let {
                 Spacer(Modifier.height(20.dp))
                 Text("다음 역 $it", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f))
+            }
+            if (!ride.online) {
+                // 연결이 끊기면 보이는 역이 오래된 것일 수 있다(갈아탈·내릴 준비 화면에서도). iOS와 같은 문구
+                Spacer(Modifier.height(10.dp))
+                Text("연결 끊김(다시 시도 중)", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = Color.White)
             }
         }
         Button(
@@ -301,16 +307,14 @@ private fun Ripple() {
 private const val RIPPLE_PERIOD = 3000
 private const val RIPPLE_SPREAD = 1300
 
-/** 골라 둔 열차를 폰이 확인했는지·놓쳤는지(이번정거장은 고른 열차를 그대로 따라가기만 한다). iOS BannerView와 같은 색. */
+/** 따라가는 열차와 환승 안내. iOS BannerView와 같은 색. */
 @Composable
 private fun Banner(ride: ActiveRide) {
-    val v = ride.view
-    val ok = v.confirmed && v.notice == null
-    val warn = v.notice != null
-    val fg = if (ok) Color(0xFF14804A) else if (warn) Color(0xFFB45309) else Brand
-    val bg = if (ok) Color(0xFFE7F6EE) else if (warn) Color(0xFFFFF4E5) else BrandTint
+    val warn = ride.view.notice == RideNoticeKind.TRANSFER
+    val fg = if (warn) Color(0xFFB45309) else Brand
+    val bg = if (warn) Color(0xFFFFF4E5) else BrandTint
     Text(
-        (if (ok) "✓ " else if (warn) "↻ " else "☝ ") + RideTexts.banner(ride),
+        (if (warn) "↻ " else "🚆 ") + RideTexts.banner(ride),
         color = fg, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
         modifier = Modifier.fillMaxWidth().background(bg, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 10.dp).testTag("ride-banner"),
     )

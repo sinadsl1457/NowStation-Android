@@ -68,7 +68,6 @@ data class RideDto(
     val prepareToAlight: Boolean = false,
     val legs: List<LegDto> = emptyList(),
     val trainNo: String? = null,
-    val confirmed: Boolean = false,
     val target: String? = null,
     val remainingStops: Int? = null,
     val notice: String? = null,
