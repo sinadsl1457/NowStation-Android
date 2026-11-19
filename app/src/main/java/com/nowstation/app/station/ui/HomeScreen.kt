@@ -125,7 +125,7 @@ private fun Header() {
                 Text("v${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 6.dp))
             }
             Spacer(Modifier.height(6.dp))
-            Text("타는 역과 내릴 역을 고르면, 탄 열차를 찾아\n잠금화면에 현재역을 보여 줘요", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.88f))
+            Text("열차에 타서 지금 탄 열차를 고르면\n잠금화면에 현재역을 보여 줘요", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.88f))
             Spacer(Modifier.height(22.dp))
             TrackDecoration()
         }
@@ -281,8 +281,8 @@ private fun HowItWorks() {
             Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(16.dp)).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Step(1, "타는 역과 내릴 역을 고르고 탑승 시작")
-            Step(2, "열차에 타면 폰 움직임으로 탄 열차를 찾아요")
+            Step(1, "열차에 탄 뒤 타는 역·내릴 역을 고르고 탑승 시작")
+            Step(2, "목록에서 지금 탄 열차를 골라요")
             Step(3, "잠금화면에 현재역, 내리기 전엔 진동")
         }
     }
