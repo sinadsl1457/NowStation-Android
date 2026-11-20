@@ -68,7 +68,8 @@ class RideNotifications @Inject constructor(@ApplicationContext private val cont
             PendingIntent.FLAG_IMMUTABLE,
         )
         val title = ride?.let(RideTexts::title) ?: "탑승을 시작하는 중"
-        val detail = ride?.let(RideTexts::detail)
+        // 늘 최종 목적지까지 남은 정거장을 같이(앱 화면·iOS 잠금화면과 같게): "다음 역 모란 · 야탑까지 2정거장"
+        val detail = ride?.let { listOfNotNull(RideTexts.detail(it), RideTexts.remaining(it)).joinToString(" · ") }
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_train)
             .setContentTitle(title)
