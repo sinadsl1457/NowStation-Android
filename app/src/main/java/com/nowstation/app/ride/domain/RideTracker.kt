@@ -72,7 +72,7 @@ class RideTracker @Inject constructor(
         return result
     }
 
-    /** 가로 노선도. 탑승 화면이 15초마다 부른다. */
+    /** 들어오는 열차 목록(세로 노선도). 탑승 화면이 5초마다 부른다. */
     suspend fun strip(): AppResult<TrainStrip?> {
         val ride = _state.value ?: return AppResult.Success(null)
         return repository.strip(ride.view.rideId)
