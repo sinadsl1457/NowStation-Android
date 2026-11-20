@@ -37,6 +37,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -77,6 +78,7 @@ class HomeActions(
     val onStart: () -> Unit,
     val onUseRecent: (RecentRoute) -> Unit,
     val onCloseSearch: () -> Unit,
+    val onShowGuide: () -> Unit = {},
 )
 
 /** 홈. 역 검색은 칸을 눌렀을 때만 덮어서 연다(첫 화면에 긴 목록을 깔지 않음). */
@@ -105,6 +107,9 @@ private fun HomeContent(state: HomeUiState, actions: HomeActions) {
             Column(Modifier.alpha(intro?.below ?: 1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
                 if (state.recent.isNotEmpty()) RecentRoutes(state.recent, state.isStarting, actions.onUseRecent) else HowItWorks()
                 if (state.lines.isNotEmpty()) SupportedLines(state.lines)
+            }
+            TextButton(onClick = actions.onShowGuide, modifier = Modifier.align(Alignment.CenterHorizontally).alpha(intro?.below ?: 1f)) {
+                Text("사용법 다시 보기", style = MaterialTheme.typography.labelLarge, color = Brand)
             }
             // 공공데이터 이용 조건: 출처 표시
             Text(

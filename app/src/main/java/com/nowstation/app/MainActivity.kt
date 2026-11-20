@@ -21,6 +21,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.launch
 import com.nowstation.app.core.ui.LaunchIntro
+import com.nowstation.app.guide.GuideScreen
+import com.nowstation.app.guide.GuideStore
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import com.nowstation.app.core.ui.LaunchOverlay
 import com.nowstation.app.core.ui.LocalLaunchIntro
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -40,6 +46,14 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject lateinit var tracker: RideTracker
+    @Inject lateinit var guide: GuideStore
+
+    /** 잠금화면 진행 중 알림에 필요. 거부해도 앱 화면으로는 쓸 수 있다. */
+    private fun askNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
@@ -50,16 +64,15 @@ class MainActivity : ComponentActivity() {
             splashScreen.setOnExitAnimationListener { it.remove() }
         }
         enableEdgeToEdge()
-        // 잠금화면 진행 중 알림에 필요. 거부해도 앱 화면으로는 쓸 수 있다.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
+        // 처음 실행이면 가이드 마지막 장 버튼에서 묻는다(이유를 보여 준 뒤). 이미 본 사람은 전처럼 켤 때
+        if (guide.seen) askNotificationPermission()
         setContent {
             NowStationTheme {
                 val ride by tracker.state.collectAsStateWithLifecycle()
                 // 첫 실행 애니메이션은 앱을 새로 켤 때 홈에서만(회전 등으로 다시 만들어질 때·탑승 중엔 없음)
                 var intro by remember { mutableStateOf(if (savedInstanceState == null) LaunchIntro() else null) }
                 val scope = rememberCoroutineScope()
+                var showGuide by remember { mutableStateOf(!guide.seen) }
                 LaunchedEffect(intro) {
                     val running = intro ?: return@LaunchedEffect
                     try {
@@ -95,12 +108,24 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     val actions = remember(vm) {
-                        HomeActions(vm::onQueryChange, vm::pick, vm::edit, vm::swap, vm::start, vm::useRecent, vm::closeSearch)
+                        HomeActions(vm::onQueryChange, vm::pick, vm::edit, vm::swap, vm::start, vm::useRecent, vm::closeSearch, onShowGuide = { showGuide = true })
                     }
                     val running = intro
                     CompositionLocalProvider(LocalLaunchIntro provides running) {
                         Box {
                             HomeScreen(state, actions)
+                            // 런치 애니메이션이 끝나 홈이 된 뒤 위로 올라온다. 처음 한 번만(다시 보기는 홈에서)
+                            AnimatedVisibility(
+                                visible = running == null && showGuide,
+                                enter = slideInVertically { it },
+                                exit = slideOutVertically { it } + fadeOut(),
+                            ) {
+                                GuideScreen(onDone = {
+                                    guide.markSeen()
+                                    showGuide = false
+                                    askNotificationPermission()
+                                })
+                            }
                             if (running != null) {
                                 LaunchOverlay(running, onSkip = { scope.launch { running.time.snapTo(LaunchIntro.TOTAL) } })
                             }

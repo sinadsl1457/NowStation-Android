@@ -16,6 +16,7 @@
 com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는 com.taektoy.nowstation)
 ├ core/      결과·오류 타입(AppResult, safeApiCall), 네트워크(Retrofit), 테마, 저장소 연결(Hilt)
 ├ station/   역 검색 + 홈 화면. 상태는 홈 화면 ViewModel이 갖고 화면과 함께 사라진다
+├ guide/     처음 실행 가이드 4장(+ 봤는지 저장). 홈과 따로 생기고 사라져서(처음 한 번·다시 보기) 따로 둠. 알림 권한은 마지막 장 버튼에서 묻는다
 └ ride/      진행 중인 탑승. 화면이 사라져도 계속돼야 해서 @Singleton RideTracker가 갖는다
    ├ domain/  RideTracker(앱 전체가 같이 보는 탑승 상태), 모델, 저장소 인터페이스
    ├ data/    서버 탑승 API
@@ -27,6 +28,7 @@ com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는
 - 의존 방향: ui → domain ← data. domain은 Android를 모른다(RideTracker도 순수 Kotlin + 주입된 Clock).
 - ViewModel은 Context를 모른다. 서비스 시작은 `RideServiceLauncher` 인터페이스로.
 - 화면 이동 라이브러리 없이 "탑승 중이면 탑승 화면, 아니면 홈"으로 고른다(화면이 둘뿐).
+- 앱을 새로 켜면 런치 애니메이션(`core/ui/LaunchIntro`: 시작 화면 아이콘 → 홈 머리의 노선 그림, 홈은 머리 높이·투명도만 따른다) 뒤 처음 한 번 가이드가 올라온다
 - 로직 없는 UseCase는 만들지 않는다. ViewModel → 저장소/RideTracker 직접.
 - 시간은 `Clock` 주입.
 
