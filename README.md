@@ -7,8 +7,8 @@
 iOS 버전 → [NowStation-iOS](https://github.com/sinadsl1457/NowStation-iOS)(같은 화면·판단 규칙, 개인 테스트용).
 앱은 **폰이 출발·정차한 순간을 가속도 센서로 잡아 보내고**, 결과를 **앱을 보지 않아도** 알림으로 보여 줍니다.
 
-<p align="center"><img src="docs/demo/nowstation-demo.gif" width="300" alt="태평에서 야탑까지: 역 고르기, 다가오는 열차 고르기, 한 정거장 전 알림, 내릴 준비, 도착"></p>
-<p align="center"><sub>실제 녹화 열차 데이터 + 에뮬레이터 센서 주입으로 찍은 장면(6분 43초 → 35초 요약, <a href="docs/demo/nowstation-demo.mp4">mp4</a>)</sub></p>
+<p align="center"><img src="docs/demo/nowstation-demo.gif" width="300" alt="태평에서 강남까지: 역 고르기, 들어오는 열차 고르기, 한티에서 갈아타기 띠, 선릉에서 2호선, 역삼에서 내릴 준비, 강남 도착"></p>
+<p align="center"><sub>태평 → 강남(선릉에서 2호선 환승). 퇴근 시간 <b>합성</b> 열차 데이터(<code>make_rush_hour.py</code>)를 재생 서버로 흘려 에뮬레이터에서 찍은 장면(29분 → 43초 요약, <a href="docs/demo/nowstation-demo.mp4">mp4</a>)</sub></p>
 
 | 홈 | 다가오는 열차 고르기 | 내릴 역 직전 | 다른 화면 위로 | 잠긴 폰 |
 |---|---|---|---|---|
