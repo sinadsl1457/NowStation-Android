@@ -14,6 +14,12 @@ iOS 버전 → [NowStation-iOS](https://github.com/sinadsl1457/NowStation-iOS)(�
 |---|---|---|---|---|
 | <img src="docs/screenshots/home.png" width="160"> | <img src="docs/screenshots/riding.png" width="160"> | <img src="docs/screenshots/alight.png" width="160"> | <img src="docs/screenshots/popup.png" width="160"> | <img src="docs/screenshots/lockscreen.png" width="160"> |
 
+| 처음 실행 | 가이드 1 | 가이드 2 | 가이드 3 | 가이드 4 |
+|---|---|---|---|---|
+| <img src="docs/demo/first-run.gif" width="160" alt="시작 화면 아이콘이 홈의 노선 그림으로 바뀌며 홈이 자리 잡고, 가이드 4장이 올라온다"> | <img src="docs/screenshots/guide-1.png" width="160"> | <img src="docs/screenshots/guide-2.png" width="160"> | <img src="docs/screenshots/guide-3.png" width="160"> | <img src="docs/screenshots/guide-4.png" width="160"> |
+
+<sub>앱을 처음 켜면 시작 화면의 아이콘이 홈 머리의 노선 그림으로 바뀌며 홈이 자리 잡고(약 1.25초, 코드로 그림), 가이드 4장이 올라옵니다. 알림 권한은 마지막 장 버튼에서 묻고, 가이드는 홈 오른쪽 위 ? 로 다시 봅니다(<a href="docs/demo/first-run.mp4">mp4</a>, 에뮬레이터).</sub>
+
 ## 기술적으로 신경 쓴 부분
 
 | 문제 | 해결 |
