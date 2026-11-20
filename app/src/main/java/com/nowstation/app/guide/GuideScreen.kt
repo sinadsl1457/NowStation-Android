@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -98,9 +99,10 @@ fun GuideScreen(onDone: () -> Unit) {
         HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
             // 0이면 이 장이 가운데. 그림만 더 밀어 글자보다 느리게 움직이게
             val offset = (pager.currentPage - page) + pager.currentPageOffsetFraction
-            Column(Modifier.fillMaxSize()) {
+            // 그림이 글자보다 느리게 움직여 옆 장으로 비어져 나온다 → 장마다 잘라 낸다
+            Column(Modifier.fillMaxSize().clipToBounds()) {
                 Box(
-                    Modifier.fillMaxWidth().height(artHeight).statusBarsPadding()
+                    Modifier.fillMaxWidth().height(artHeight).statusBarsPadding().padding(top = 24.dp)
                         .graphicsLayer { translationX = offset * size.width * 0.35f },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -344,7 +346,7 @@ private fun AlertArt(time: Float) {
                     .border(1.dp, Color(0xFFF5D58A), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
             ) {
                 Text("지금역 · 지금", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8A5A00))
-                Text("다음 역 선릉 · 2호선으로 갈아타세요", fontSize = 14.sp, fontWeight = FontWeight.ExtraBold, color = Ink)
+                Text("다음 역 선릉 · 2호선으로 갈아타세요", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Ink, maxLines = 1, softWrap = false)
             }
         }
     }
