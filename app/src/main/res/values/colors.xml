@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#356DF3</color>
+    <!-- 시작 화면 바탕 = 홈 머리 색(Brand). 첫 실행 애니메이션이 이 파란 화면에서 홈으로 이어진다 -->
+    <color name="launch_background">#1F4FD8</color>
 </resources>

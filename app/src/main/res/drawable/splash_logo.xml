@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 시작 화면 아이콘: 앱 아이콘과 같은 그림, 링 안쪽만 시작 화면 바탕색(#1F4FD8, 홈 머리 색)으로. 첫 실행 애니메이션(LaunchIntro)이 이 그림에서 이어진다 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M31,51.5h46a2.5,2.5 0 0,1 0,5h-46a2.5,2.5 0 0,1 0,-5z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M33,54m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M75,54m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,54m-14,0a14,14 0 1,1 28,0a14,14 0 1,1 -28,0" />
+    <path android:fillColor="#1F4FD8" android:pathData="M54,54m-9,0a9,9 0 1,1 18,0a9,9 0 1,1 -18,0" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,54m-4.5,0a4.5,4.5 0 1,1 9,0a4.5,4.5 0 1,1 -9,0" />
+</vector>

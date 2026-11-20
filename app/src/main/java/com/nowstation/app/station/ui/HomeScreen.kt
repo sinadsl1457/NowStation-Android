@@ -40,7 +40,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -55,6 +59,7 @@ import com.nowstation.app.core.ui.Brand
 import com.nowstation.app.core.ui.BrandTint
 import com.nowstation.app.core.ui.Ground
 import com.nowstation.app.core.ui.Hairline
+import com.nowstation.app.core.ui.LocalLaunchIntro
 import com.nowstation.app.core.ui.LineChip
 import com.nowstation.app.core.ui.LineBadge
 import com.nowstation.app.core.ui.LineBadges
@@ -91,20 +96,23 @@ private fun HomeContent(state: HomeUiState, actions: HomeActions) {
     Column(Modifier.fillMaxSize().background(Ground).verticalScroll(rememberScrollState())) {
         Header()
         // 경로 카드가 파란 머리 영역에 걸치게 위로 올린다
+        val intro = LocalLaunchIntro.current
         Column(
             Modifier.offset(y = (-60).dp).padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             RouteCard(state, actions)
-            if (state.recent.isNotEmpty()) RecentRoutes(state.recent, state.isStarting, actions.onUseRecent) else HowItWorks()
-            if (state.lines.isNotEmpty()) SupportedLines(state.lines)
+            Column(Modifier.alpha(intro?.below ?: 1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                if (state.recent.isNotEmpty()) RecentRoutes(state.recent, state.isStarting, actions.onUseRecent) else HowItWorks()
+                if (state.lines.isNotEmpty()) SupportedLines(state.lines)
+            }
             // 공공데이터 이용 조건: 출처 표시
             Text(
                 "열차 위치: 서울특별시 열린데이터광장 실시간 지하철 정보",
                 style = MaterialTheme.typography.labelSmall,
                 color = Muted,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
+                modifier = Modifier.fillMaxWidth().navigationBarsPadding().alpha(intro?.below ?: 1f),
             )
         }
     }
@@ -112,20 +120,32 @@ private fun HomeContent(state: HomeUiState, actions: HomeActions) {
 
 @Composable
 private fun Header() {
-    Box(Modifier.fillMaxWidth().background(Brand)) {
-        Canvas(Modifier.align(Alignment.TopEnd).size(240.dp).offset(x = 40.dp, y = 30.dp)) {
+    val intro = LocalLaunchIntro.current
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .background(Brand)
+            // 첫 실행 애니메이션: 처음엔 화면 전체(시작 화면과 같은 파란 화면)였다가 원래 높이로 줄며 카드가 따라 올라온다
+            .layout { measurable, constraints ->
+                val p = measurable.measure(constraints)
+                val extra = if (intro == null) 0 else
+                    ((intro.windowHeight - p.height + 80.dp.roundToPx()).coerceAtLeast(0) * (1 - intro.shrink)).toInt()
+                layout(p.width, p.height + extra) { p.place(0, 0) }
+            },
+    ) {
+        Canvas(Modifier.align(Alignment.TopEnd).size(240.dp).offset(x = 40.dp, y = 30.dp).alpha(intro?.title ?: 1f)) {
             drawCircle(Color.White.copy(alpha = 0.12f), radius = size.minDimension / 2, style = Stroke(2.dp.toPx()))
             drawCircle(Color.White.copy(alpha = 0.18f), radius = size.minDimension / 3.6f, style = Stroke(2.dp.toPx()), center = center.copy(x = center.x - 30.dp.toPx(), y = center.y + 20.dp.toPx()))
         }
         Column(Modifier.statusBarsPadding().padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 92.dp)) {
-            Row(verticalAlignment = Alignment.Bottom) {
+            Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.alpha(intro?.title ?: 1f)) {
                 Text("지금역", fontSize = 30.sp, fontWeight = FontWeight.Black, color = Color.White)
                 Spacer(Modifier.width(8.dp))
                 // 설치된 버전을 바로 보이게: 테스트 트랙에서 새 빌드가 들어왔는지 폰에서 확인
                 Text("v${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.7f), modifier = Modifier.padding(bottom = 6.dp))
             }
             Spacer(Modifier.height(6.dp))
-            Text("열차에 타서 지금 탄 열차를 고르면\n잠금화면에 현재역을 보여 줘요", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.88f))
+            Text("열차에 타서 지금 탄 열차를 고르면\n잠금화면에 현재역을 보여 줘요", style = MaterialTheme.typography.bodyLarge, color = Color.White.copy(alpha = 0.88f), modifier = Modifier.alpha(intro?.title ?: 1f))
             Spacer(Modifier.height(22.dp))
             TrackDecoration()
         }
@@ -135,7 +155,12 @@ private fun Header() {
 /** 노선 위 "지금 여기" 그림. */
 @Composable
 private fun TrackDecoration() {
-    Canvas(Modifier.width(250.dp).height(24.dp)) {
+    val intro = LocalLaunchIntro.current
+    Canvas(
+        Modifier.width(250.dp).height(24.dp)
+            .onGloballyPositioned { if (intro != null) intro.track = it.boundsInRoot() }
+            .alpha(intro?.handoff ?: 1f),
+    ) {
         val y = size.height / 2
         val stops = listOf(0f, 0.33f, 0.66f, 1f).map { it * (size.width - 12.dp.toPx()) + 6.dp.toPx() }
         val faded = Color.White.copy(alpha = 0.45f)
