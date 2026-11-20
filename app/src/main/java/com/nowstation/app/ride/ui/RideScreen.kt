@@ -467,7 +467,6 @@ private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) 
                 }
             }
         }
-        if (!riding) Text("${strip.leg.from}에 서지 않는 급행, ${strip.leg.to}까지 가지 않는 열차는 빼고 보여 줘요", fontSize = 12.sp, color = Muted, modifier = Modifier.padding(horizontal = 4.dp))
     }
 }
 
