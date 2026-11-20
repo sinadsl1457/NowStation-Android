@@ -346,7 +346,7 @@ private fun AlertArt(time: Float) {
                     .border(1.dp, Color(0xFFF5D58A), RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
             ) {
                 Text("지금역 · 지금", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color(0xFF8A5A00))
-                Text("다음 역 선릉 · 2호선으로 갈아타세요", fontSize = 13.sp, fontWeight = FontWeight.ExtraBold, color = Ink, maxLines = 1, softWrap = false)
+                Text("다음 역 선릉\n2호선으로 갈아타세요", fontSize = 14.sp, lineHeight = 19.sp, fontWeight = FontWeight.ExtraBold, color = Ink)
             }
         }
     }
