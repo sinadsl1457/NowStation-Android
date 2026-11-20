@@ -19,6 +19,8 @@ data class RideView(
     val target: String? = null,
     val remainingStops: Int? = null,
     val notice: RideNoticeKind? = null,
+    /** 최종 목적지까지 남은 정거장(늘 보여 주는 숫자. 환승이 여러 번이어도 하나). */
+    val totalRemainingStops: Int? = null,
 )
 
 /** [stations]: 지나는 역(양 끝 포함). 전체 경로 막대에 쓴다(노선도 응답의 구간에는 비어 있음). */

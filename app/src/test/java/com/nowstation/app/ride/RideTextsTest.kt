@@ -67,4 +67,13 @@ class RideTextsTest {
         assertEquals("곧 강남, 내릴 준비하세요", RideTexts.title(r(view(RideStatus.MOVING, "강남", alight = true).copy(target = "강남"))))
         assertEquals("왕십리행", RideTexts.terminal(StripTrain("6206", "모란", "ARRIVED", "왕십리", true, 3)))
     }
+
+    @Test
+    fun `남은 정거장은 늘 최종 목적지까지, 환승은 한 정거장 전 띠로만`() {
+        val v = view(RideStatus.MOVING, "수서", "대모산입구", line = "수인분당선").copy(target = "선릉", remainingStops = 6, totalRemainingStops = 8,
+            legs = listOf(com.nowstation.app.ride.domain.RideLeg("수인분당선", "태평", "선릉"), com.nowstation.app.ride.domain.RideLeg("2호선", "선릉", "강남")))
+        assertEquals("강남까지 8정거장", RideTexts.remaining(ride(v)))
+        val near = v.copy(thisStation = "한티", nextStation = "선릉", prepareToAlight = true, remainingStops = 1, totalRemainingStops = 3)
+        assertEquals("다음 역 선릉 · 2호선으로 갈아타세요", RideTexts.banner(ride(near)))
+    }
 }

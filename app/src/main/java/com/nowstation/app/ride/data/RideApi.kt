@@ -81,4 +81,5 @@ data class RideDto(
     val target: String? = null,
     val remainingStops: Int? = null,
     val notice: String? = null,
+    val totalRemainingStops: Int? = null,
 )

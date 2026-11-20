@@ -61,11 +61,15 @@ object RideTexts {
         }
     }
 
-    /** "선릉까지 6정거장". 구간 끝(환승역·내릴 역)까지. 모르면 null. iOS와 같은 문구. */
+    /**
+     * "강남까지 8정거장": 늘 최종 목적지까지(사용자 피드백: '선릉까지 6정거장'은 선릉을 목적지로 오해하고, 환승이 여러 번이면 구간별로 다 못 보여 줌).
+     * 환승은 그때그때 띠·진동으로만 알린다. 서버가 전체 수를 안 주면(옛 서버) 구간 끝까지. iOS와 같은 문구.
+     */
     fun remaining(ride: ActiveRide): String? {
-        val target = ride.view.target ?: return null
-        val n = ride.view.remainingStops ?: return null
-        return if (n == 0) "이번 역이 ${target}이에요" else "${target}까지 ${n}정거장"
+        val dest = ride.destination ?: ride.view.target ?: return null
+        val n = ride.view.totalRemainingStops ?: ride.view.remainingStops ?: return null
+        val name = if (ride.view.totalRemainingStops != null) dest else (ride.view.target ?: dest)
+        return if (n == 0) "이번 역이 ${name}이에요" else "${name}까지 ${n}정거장"
     }
 
     /** 노선도 위 열차의 그 역에서의 상태: 공공 데이터 그대로라 위쪽 "이번 정거장"(다가오는 역)과 헷갈리지 않게 적는다. */
@@ -108,7 +112,7 @@ object RideTexts {
         val v = ride.view
         val target = v.target
         if (v.prepareToAlight && target != null && v.thisStation != target) {
-            return if (isTransfer(ride)) "다음 역 $target, 갈아탈 준비하세요" else "다음 역 $target, 내릴 준비하세요"
+            return if (isTransfer(ride)) "다음 역 $target · ${ride.view.legs.firstOrNull { it.from == target }?.line ?: "다음 노선"}으로 갈아타세요" else "다음 역 $target, 내릴 준비하세요"
         }
         val no = v.trainNo ?: return "탄 열차를 아래 노선도에서 골라 주세요"
         if (v.notice == RideNoticeKind.TRANSFER) {

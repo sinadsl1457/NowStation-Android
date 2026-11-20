@@ -56,4 +56,5 @@ internal fun RideDto.toDomain() = RideView(
     target = target,
     remainingStops = remainingStops,
     notice = RideNoticeKind.entries.firstOrNull { it.name == notice },
+    totalRemainingStops = totalRemainingStops,
 )
