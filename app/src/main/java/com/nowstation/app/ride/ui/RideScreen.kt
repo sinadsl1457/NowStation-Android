@@ -154,7 +154,7 @@ private fun RidingContent(ride: ActiveRide, strip: TrainStrip?, picking: String?
         }
 
         if (v.legs.any { it.stations.isNotEmpty() }) RouteBar(v.legs, v.thisStation, v.line)
-        if (strip != null) StripCard(strip, picking, onPick) else RouteCard(ride)
+        if (strip != null) StripCard(strip, picking, onPick, afterBoarding = v.prepareToAlight || v.status == RideStatus.ARRIVED) else RouteCard(ride)
 
         Spacer(Modifier.height(4.dp))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 6.dp)) {
@@ -393,7 +393,7 @@ private fun RouteBar(legs: List<RideLeg>, here: String?, currentLine: String?) {
  * 탄 뒤에는 같은 세로 노선에서 내 열차가 구간 끝(환승역·내릴 역) 쪽으로 내려간다.
  */
 @Composable
-private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) -> Unit) {
+private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) -> Unit, afterBoarding: Boolean = false) {
     val receivedAt = remember(strip) { android.os.SystemClock.elapsedRealtime() }
     var nowMs by remember { mutableStateOf(android.os.SystemClock.elapsedRealtime()) }
     LaunchedEffect(Unit) {
@@ -405,7 +405,8 @@ private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) 
     val c = lineColor(strip.leg.line)
     val selected = strip.trains.firstOrNull { it.selected }
     val selIdx = selected?.let { strip.stations.indexOf(it.station) } ?: -1
-    val riding = selIdx > strip.boardIndex || (selIdx == strip.boardIndex && selected?.status == "DEPARTED")
+    // 내릴 준비·도착 뒤에는 고르기를 다시 띄우지 않는다(도착 순간 서버가 따라가던 열차를 놓아 '아직 안 탔다'로 보였다)
+    val riding = selIdx > strip.boardIndex || (selIdx == strip.boardIndex && selected?.status == "DEPARTED") || afterBoarding
     val from = if (riding) strip.boardIndex else 0
     val to = if (riding) strip.stations.lastIndex else minOf(strip.boardIndex + 1, strip.stations.lastIndex)
     val window = strip.stations.subList(from, to + 1)
