@@ -453,7 +453,8 @@ private fun StripCard(strip: TrainStrip, picking: String?, onPick: (StripTrain) 
                     Row(Modifier.offset(x = 58.dp, y = (p * gap + 2).dp), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(20.dp).background(if (t.selected) c else Color(0xFFC9D1E0), RoundedCornerShape(6.dp)).border(2.dp, Color.White, RoundedCornerShape(6.dp)))
                         Spacer(Modifier.width(4.dp))
-                        Text(t.trainNo, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF2A3348))
+                        // 역 이름(13)보다 조금 크게: 움직이는 열차를 승강장에서 한눈에(실탑승 피드백). 16은 칸(42dp)에 빠듯하고 역 이름을 누른다
+                        Text(t.trainNo, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF2A3348))
                     }
                 }
             }
