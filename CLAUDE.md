@@ -16,7 +16,7 @@
 com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는 com.taektoy.nowstation)
 ├ core/      결과·오류 타입(AppResult, safeApiCall), 네트워크(Retrofit), 테마, 저장소 연결(Hilt)
 ├ station/   역 검색 + 홈 화면. 상태는 홈 화면 ViewModel이 갖고 화면과 함께 사라진다
-├ settings/  설정(시스템 알림 설정 열기, 사용법 다시 보기, 문의 메일, 개인정보처리방침, 오픈소스 라이선스, 출처, 버전). 저장하는 상태가 없어 화면만. 개인정보처리방침은 Play 정책상 앱 안에서도 열려야 한다
+├ settings/  설정. 모두 앱 안에서: 알림 스위치(AlertSettings: 갈아타기·내릴 역·진동, RideService가 따름. 진행 중 알림은 포그라운드 서비스라 못 끔), 사용법 다시 보기, 문의하기(ContactViewModel → 서버 POST /api/feedback), 개인정보처리방침(WebView, 서버 /privacy), 라이선스, 버전. 개인정보처리방침은 Play 정책상 앱 안에서도 열려야 한다
 ├ guide/     처음 실행 가이드 4장(+ 봤는지 저장). 홈과 따로 생기고 사라져서(처음 한 번·다시 보기) 따로 둠. 알림 권한은 마지막 장 버튼에서 묻는다
 └ ride/      진행 중인 탑승. 화면이 사라져도 계속돼야 해서 @Singleton RideTracker가 갖는다
    ├ domain/  RideTracker(앱 전체가 같이 보는 탑승 상태), 모델, 저장소 인터페이스

@@ -24,6 +24,7 @@ import com.nowstation.app.core.ui.LaunchIntro
 import com.nowstation.app.guide.GuideScreen
 import com.nowstation.app.guide.GuideStore
 import com.nowstation.app.settings.SettingsScreen
+import com.nowstation.app.settings.AlertSettings
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.AnimatedVisibility
@@ -50,6 +51,7 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     @Inject lateinit var tracker: RideTracker
     @Inject lateinit var guide: GuideStore
+    @Inject lateinit var alertSettings: AlertSettings
 
     /** 잠금화면 진행 중 알림에 필요. 거부해도 앱 화면으로는 쓸 수 있다. */
     private fun askNotificationPermission() {
@@ -123,7 +125,7 @@ class MainActivity : ComponentActivity() {
                                 enter = slideInHorizontally { it },
                                 exit = slideOutHorizontally { it },
                             ) {
-                                SettingsScreen(onBack = { showSettings = false }, onShowGuide = { showGuide = true })
+                                SettingsScreen(alertSettings, onBack = { showSettings = false }, onShowGuide = { showGuide = true })
                             }
                             // 런치 애니메이션이 끝나 홈이 된 뒤 위로 올라온다. 처음 한 번만(다시 보기는 설정에서)
                             AnimatedVisibility(

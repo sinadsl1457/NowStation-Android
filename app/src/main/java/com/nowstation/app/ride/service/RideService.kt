@@ -12,6 +12,8 @@ import com.nowstation.app.ride.domain.ActiveRide
 import com.nowstation.app.ride.domain.RideTracker
 import com.nowstation.app.ride.motion.MotionDetector
 import dagger.hilt.android.AndroidEntryPoint
+import com.nowstation.app.settings.AlertSettings
+import com.nowstation.app.ride.ui.RideTexts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -33,6 +35,7 @@ class RideService : LifecycleService() {
     @Inject lateinit var notifications: RideNotifications
     @Inject lateinit var accelerometer: Accelerometer
     @Inject lateinit var vibrator: AlightVibrator
+    @Inject lateinit var alertSettings: AlertSettings
 
     private var loops: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
@@ -84,8 +87,12 @@ class RideService : LifecycleService() {
                 tracker.state.collect { ride ->
                     val manager = getSystemService(NotificationManager::class.java)
                     if (ride != null && ActiveRide.alightAlertStarted(previous, ride)) {
-                        vibrator.vibrate()
-                        manager.notify(RideNotifications.ALIGHT_NOTIFICATION_ID, notifications.buildAlight(ride))
+                        // 설정의 알림 스위치(갈아타기·내릴 역·진동)를 따른다
+                        val prefs = alertSettings.state.value
+                        if (if (RideTexts.isTransfer(ride)) prefs.transfer else prefs.alight) {
+                            if (prefs.vibrate) vibrator.vibrate()
+                            manager.notify(RideNotifications.ALIGHT_NOTIFICATION_ID, notifications.buildAlight(ride))
+                        }
                     }
                     previous = ride
                     if (ride == null) {

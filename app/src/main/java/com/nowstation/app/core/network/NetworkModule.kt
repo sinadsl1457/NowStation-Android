@@ -2,6 +2,7 @@ package com.nowstation.app.core.network
 
 import com.nowstation.app.BuildConfig
 import com.nowstation.app.ride.data.RideApi
+import com.nowstation.app.settings.FeedbackApi
 import com.nowstation.app.station.data.StationApi
 import dagger.Module
 import dagger.Provides
@@ -49,4 +50,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun rideApi(retrofit: Retrofit): RideApi = retrofit.create(RideApi::class.java)
+
+    @Provides
+    @Singleton
+    fun feedbackApi(retrofit: Retrofit): FeedbackApi = retrofit.create(FeedbackApi::class.java)
 }
