@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.NorthWest
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Train
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -78,6 +79,7 @@ class HomeActions(
     val onUseRecent: (RecentRoute) -> Unit,
     val onCloseSearch: () -> Unit,
     val onShowGuide: () -> Unit = {},
+    val onShowSettings: () -> Unit = {},
 )
 
 /** 홈. 역 검색은 칸을 눌렀을 때만 덮어서 연다(첫 화면에 긴 목록을 깔지 않음). */
@@ -95,7 +97,7 @@ fun HomeScreen(state: HomeUiState, actions: HomeActions) {
 private fun HomeContent(state: HomeUiState, actions: HomeActions) {
     StatusBarIcons(dark = false)
     Column(Modifier.fillMaxSize().background(Ground).verticalScroll(rememberScrollState())) {
-        Header(onShowGuide = actions.onShowGuide)
+        Header(onShowSettings = actions.onShowSettings)
         // 경로 카드가 파란 머리 영역에 걸치게 위로 올린다
         val intro = LocalLaunchIntro.current
         Column(
@@ -120,7 +122,7 @@ private fun HomeContent(state: HomeUiState, actions: HomeActions) {
 }
 
 @Composable
-private fun Header(onShowGuide: () -> Unit) {
+private fun Header(onShowSettings: () -> Unit) {
     val intro = LocalLaunchIntro.current
     Box(
         Modifier
@@ -138,14 +140,12 @@ private fun Header(onShowGuide: () -> Unit) {
             drawCircle(Color.White.copy(alpha = 0.12f), radius = size.minDimension / 2, style = Stroke(2.dp.toPx()))
             drawCircle(Color.White.copy(alpha = 0.18f), radius = size.minDimension / 3.6f, style = Stroke(2.dp.toPx()), center = center.copy(x = center.x - 30.dp.toPx(), y = center.y + 20.dp.toPx()))
         }
-        // 가이드 다시 보기
+        // 설정(사용법 다시 보기·알림·문의·개인정보처리방침)
         IconButton(
-            onClick = onShowGuide,
+            onClick = onShowSettings,
             modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(top = 20.dp, end = 12.dp).alpha(intro?.title ?: 1f),
         ) {
-            Box(Modifier.size(30.dp).border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape), contentAlignment = Alignment.Center) {
-                Text("?", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            }
+            Icon(Icons.Outlined.Settings, contentDescription = "설정", tint = Color.White)
         }
         Column(Modifier.statusBarsPadding().padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 92.dp)) {
             Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.alpha(intro?.title ?: 1f)) {

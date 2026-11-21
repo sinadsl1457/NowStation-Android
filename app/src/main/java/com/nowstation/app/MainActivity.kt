@@ -23,6 +23,9 @@ import kotlinx.coroutines.launch
 import com.nowstation.app.core.ui.LaunchIntro
 import com.nowstation.app.guide.GuideScreen
 import com.nowstation.app.guide.GuideStore
+import com.nowstation.app.settings.SettingsScreen
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -73,6 +76,7 @@ class MainActivity : ComponentActivity() {
                 var intro by remember { mutableStateOf(if (savedInstanceState == null) LaunchIntro() else null) }
                 val scope = rememberCoroutineScope()
                 var showGuide by remember { mutableStateOf(!guide.seen) }
+                var showSettings by remember { mutableStateOf(false) }
                 LaunchedEffect(intro) {
                     val running = intro ?: return@LaunchedEffect
                     try {
@@ -108,13 +112,20 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     val actions = remember(vm) {
-                        HomeActions(vm::onQueryChange, vm::pick, vm::edit, vm::swap, vm::start, vm::useRecent, vm::closeSearch, onShowGuide = { showGuide = true })
+                        HomeActions(vm::onQueryChange, vm::pick, vm::edit, vm::swap, vm::start, vm::useRecent, vm::closeSearch, onShowGuide = { showGuide = true }, onShowSettings = { showSettings = true })
                     }
                     val running = intro
                     CompositionLocalProvider(LocalLaunchIntro provides running) {
                         Box {
                             HomeScreen(state, actions)
-                            // 런치 애니메이션이 끝나 홈이 된 뒤 위로 올라온다. 처음 한 번만(다시 보기는 홈에서)
+                            AnimatedVisibility(
+                                visible = showSettings,
+                                enter = slideInHorizontally { it },
+                                exit = slideOutHorizontally { it },
+                            ) {
+                                SettingsScreen(onBack = { showSettings = false }, onShowGuide = { showGuide = true })
+                            }
+                            // 런치 애니메이션이 끝나 홈이 된 뒤 위로 올라온다. 처음 한 번만(다시 보기는 설정에서)
                             AnimatedVisibility(
                                 visible = running == null && showGuide,
                                 enter = slideInVertically { it },
