@@ -52,13 +52,13 @@
 |---|---|
 | 앱 아이콘 512×512 | `icon-512.png` |
 | 그래픽 이미지 1024×500 | `feature-1024x500.png` |
-| 휴대전화 스크린샷(1200×2400, 2:1, 이 순서로 8장) | `phone-1-home.png` 홈(오른쪽 위 ? = 사용법 다시 보기) · `phone-2-search.png` 역 검색 · `phone-3-incoming.png` 들어오는 열차 고르기 · `phone-4-riding.png` 탑승 중(한 정거장 전 띠) · `phone-5-alight.png` 내릴 준비 · `phone-6-over-app.png` 다른 화면 위 알림 · `phone-7-lockscreen.png` 잠금화면 · `phone-8-shade.png` 알림창(도착) |
+| 휴대전화 스크린샷(1200×2400, 2:1, 이 순서로 8장) | `phone-1-home.png` 홈(오른쪽 위 톱니바퀴 = 설정) · `phone-2-search.png` 역 검색 · `phone-3-incoming.png` 들어오는 열차 고르기 · `phone-4-riding.png` 탑승 중(한 정거장 전 띠) · `phone-5-alight.png` 내릴 준비 · `phone-6-over-app.png` 다른 화면 위 알림 · `phone-7-lockscreen.png` 잠금화면 · `phone-8-shade.png` 알림창(도착) |
 
 **분류:** 앱 카테고리 `지도/내비게이션`, 태그는 대중교통 관련
 
 **연락처:** 이메일 `sinadsl1457@gmail.com`
 
-**개인정보처리방침 URL:** `https://13-237-105-89.sslip.io/privacy` (운영자 grandsoft)
+**개인정보처리방침 URL:** `https://13-237-105-89.sslip.io/privacy` (운영자 grandsoft, 시행일 2026-11-21). **앱 안에서도** 설정 → 개인정보처리방침으로 열린다(Play 사용자 데이터 정책)
 
 ## 3. 앱 콘텐츠(정책)
 
