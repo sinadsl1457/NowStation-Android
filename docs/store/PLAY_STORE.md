@@ -93,9 +93,11 @@
 - 동작 영상 링크: 이미 올려 둔 시연 영상(`../demo/nowstation-demo.mp4`)의 YouTube 링크
 
 ## 4. 출시
-- 프로덕션(또는 먼저 내부 테스트) → 새 버전 만들기 → `app-release.aab` 업로드
-  - 파일 위치: `app/build/outputs/bundle/release/app-release.aab`
-  - 만드는 법: `./gradlew bundleRelease` (local.properties에 https `API_BASE_URL`과 `RELEASE_*` 서명 값이 있어야 함)
+- **자동 배포(기본):** GitHub Actions `Android Play 배포`(`.github/workflows/release.yml`)를 실행 → 테스트 → 서명된 .aab → Play 업로드
+  - `gh workflow run release.yml --ref main -f track=production -f status=draft` (첫 심사 통과 전에는 draft만 가능 → Play Console에서 "검토를 위해 전송")
+  - 출시 노트는 마지막 커밋 제목이 들어가므로 Play Console에서 아래 출시 노트로 바꾼다
+  - 2026-11-21: versionCode 70 업로드(run 44866212839)
+- 손 빌드는 Actions가 막혔을 때만: `./gradlew bundleRelease`(local.properties에 https `API_BASE_URL`과 `RELEASE_*` 서명 값) → `app/build/outputs/bundle/release/app-release.aab`를 직접 업로드
 - **Play 앱 서명** 사용(기본값). 우리가 가진 키는 "업로드 키"이고, 실제 배포 서명은 Google이 보관
 - 출시 노트: `첫 버전: 2호선·수인분당선·신분당선. 들어오는 열차를 골라 따라가며 이번 역·남은 정거장, 갈아타기 안내, 내릴 역 알림. 처음 켜면 사용법 4장`
 - 국가: 대한민국
