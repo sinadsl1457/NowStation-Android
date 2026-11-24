@@ -3,6 +3,7 @@ package com.nowstation.app.schedule
 import com.nowstation.app.schedule.domain.RepeatLabel
 import com.nowstation.app.schedule.domain.Reservation
 import com.nowstation.app.schedule.domain.ReservationAlarms
+import com.nowstation.app.schedule.domain.ReservationLiveDisplay
 import com.nowstation.app.schedule.domain.ReservationStore
 import com.nowstation.app.schedule.domain.Reservations
 import com.nowstation.app.station.domain.Station
@@ -45,8 +46,16 @@ class ReservationsTest {
         override fun snooze(id: String, at: ZonedDateTime) { snoozed[id] = at }
     }
 
+    private class FakeDisplay : ReservationLiveDisplay {
+        val shown = mutableMapOf<String, ZonedDateTime>()
+        override fun showCard(r: Reservation, departure: ZonedDateTime) { shown[r.id] = departure }
+        override fun hideCard(id: String) { shown.remove(id) }
+    }
+
+    private val display = FakeDisplay()
+
     private fun reservations(now: ZonedDateTime, store: MemoryStore = MemoryStore(), alarms: FakeAlarms = FakeAlarms()) =
-        Triple(Reservations(store, alarms, clockAt(now)), store, alarms)
+        Triple(Reservations(store, alarms, clockAt(now), display), store, alarms)
 
     @Test
     fun `한 번짜리는 오늘 나갈 시각 10분 전에 건다`() {
@@ -167,5 +176,39 @@ class ReservationsTest {
         assertEquals("화~토", RepeatLabel.of(setOf(TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY)))
         assertEquals("월 수 금", RepeatLabel.of(setOf(MONDAY, WEDNESDAY, FRIDAY)))
         assertEquals("월 화", RepeatLabel.of(setOf(MONDAY, TUESDAY)))
+    }
+
+    @Test
+    fun `오늘 8시간 안의 예약은 저장하면 잠금화면 카드를 띄우고, 한 번짜리 카드를 닫으면 예약이 꺼진다`() {
+        val (r, _, alarms) = reservations(at("0742"))
+        val saved = r.save(null, taepyeong, gangnam, LocalTime.of(8, 10), emptySet(), 10)
+        assertEquals(at("0810"), display.shown[saved.id])
+
+        r.closeCard(saved.id)
+
+        assertNull(display.shown[saved.id])
+        assertFalse(r.find(saved.id)!!.enabled)
+        assertNull(alarms.set[saved.id])
+    }
+
+    @Test
+    fun `반복 카드를 닫으면 오늘 카드만 내리고 예약은 그대로`() {
+        val (r, _, alarms) = reservations(at("0742"))
+        val saved = r.save(null, taepyeong, gangnam, LocalTime.of(10, 0), setOf(TUESDAY), 10)
+        r.closeCard(saved.id)
+
+        assertNull(display.shown[saved.id])
+        assertTrue(r.find(saved.id)!!.enabled)
+        assertEquals(at("0950"), alarms.set[saved.id])
+    }
+
+    @Test
+    fun `카드는 오늘 8시간 안만`() {
+        val base = Reservation("r", taepyeong, gangnam, LocalTime.of(8, 10), emptySet(), at("0742").toLocalDate(), 10)
+        assertEquals(at("0810"), ReservationLiveDisplay.departureToShow(base, at("0742")))
+        assertNull(ReservationLiveDisplay.departureToShow(base.copy(time = LocalTime.of(16, 0)), at("0742")))
+        assertNull(ReservationLiveDisplay.departureToShow(base.copy(time = LocalTime.of(7, 0)), at("0742")))
+        assertNull(ReservationLiveDisplay.departureToShow(base.copy(date = base.date!!.plusDays(1)), at("0742")))
+        assertNull(ReservationLiveDisplay.departureToShow(base.copy(days = setOf(WEDNESDAY), date = null), at("0742")))
     }
 }

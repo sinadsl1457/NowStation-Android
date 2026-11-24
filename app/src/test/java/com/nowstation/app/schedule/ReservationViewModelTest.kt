@@ -2,6 +2,7 @@ package com.nowstation.app.schedule
 
 import com.nowstation.app.schedule.domain.Reservation
 import com.nowstation.app.schedule.domain.ReservationAlarms
+import com.nowstation.app.schedule.domain.ReservationLiveDisplay
 import com.nowstation.app.schedule.domain.ReservationStore
 import com.nowstation.app.schedule.domain.Reservations
 import com.nowstation.app.schedule.ui.EditorPage
@@ -39,7 +40,11 @@ class ReservationViewModelTest {
     private val clock = Clock.fixed(now.toInstant(), Reservation.ZONE)
     private val store = MemoryStore()
     private val alarms = FakeAlarms()
-    private val vm = ReservationViewModel(Reservations(store, alarms, clock), alarms, clock)
+    private val display = object : ReservationLiveDisplay {
+        override fun showCard(r: Reservation, departure: ZonedDateTime) = Unit
+        override fun hideCard(id: String) = Unit
+    }
+    private val vm = ReservationViewModel(Reservations(store, alarms, clock, display), alarms, clock)
 
     @Test
     fun `새 예약은 바로 저장해도 지난 시각이 아니게 5분 단위로 잡는다`() {

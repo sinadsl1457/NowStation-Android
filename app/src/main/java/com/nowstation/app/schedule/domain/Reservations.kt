@@ -21,6 +21,7 @@ class Reservations @Inject constructor(
     private val store: ReservationStore,
     private val alarms: ReservationAlarms,
     private val clock: Clock,
+    private val display: ReservationLiveDisplay,
 ) {
     private val _state = MutableStateFlow(store.load())
     val state: StateFlow<List<Reservation>> = _state.asStateFlow()
@@ -49,11 +50,13 @@ class Reservations @Inject constructor(
         )
         write(_state.value.filterNot { it.id == r.id } + r)
         arm(r)
+        showToday(r)
         return r
     }
 
     fun delete(id: String) {
         alarms.cancel(id)
+        display.hideCard(id)
         write(_state.value.filterNot { it.id == id })
     }
 
@@ -71,6 +74,18 @@ class Reservations @Inject constructor(
         }
         replace(next)
         arm(next)
+        if (on) showToday(next) else display.hideCard(id)
+    }
+
+    /** 잠금화면 카드의 "예약 취소"(한 번짜리: 예약을 끈다) / "닫기"(반복: 오늘 카드만 내린다). */
+    fun closeCard(id: String) {
+        val r = find(id) ?: return display.hideCard(id)
+        if (r.repeats) display.hideCard(id) else setEnabled(id, false)
+    }
+
+    private fun showToday(r: Reservation) {
+        val departure = ReservationLiveDisplay.departureToShow(r, now())
+        if (departure == null) display.hideCard(r.id) else display.showCard(r, departure)
     }
 
     /** 알람이 울린 뒤: 반복은 다음 회차를 걸고, 한 번짜리는 끈다(목록에는 남는다). */

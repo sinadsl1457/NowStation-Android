@@ -21,7 +21,7 @@ com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는
 ├ schedule/  출발 예약(나갈 시각 전 알림). 홈 화면이 사라져도 알람·재부팅 뒤까지 살아야 해서 @Singleton Reservations가 목록과 알람을 함께 맞춘다
 │  ├ domain/  Reservation(다음 알림 시각, 순수 Kotlin + 서울 시각 고정), RepeatLabel(안 함·매일·주중·주말·화~토), Reservations
 │  ├ data/    폰 안 저장(한 키 JSON, 서버로 보내지 않음)
-│  ├ alarm/   AlarmManager(setAlarmClock, "알람 및 리마인더" 권한은 처음 저장할 때 설정 화면에서 받음), 알림(탑승 시작·5분 뒤 다시), 재부팅·시각 변경 뒤 다시 걸기
+│  ├ alarm/   AlarmManager(setAlarmClock, "알람 및 리마인더" 권한은 처음 저장할 때 설정 화면에서 받음), 알림(탑승 시작·5분 뒤 다시), 재부팅·시각 변경 뒤 다시 걸기, 예약 카드(저장하는 순간 오늘 8시간 안이면 계속 떠 있는 알림: 남은 시간은 시스템이 거꾸로 셈, 탑승 시작·예약 취소/닫기. iOS Live Activity와 같은 규칙)
 │  └ ui/      예약 시트(반복은 iOS 알람처럼 요일 목록), 입체 순환선 시계판(5분 단위만), 홈 예약 목록. 홈은 자리(slot)만 준다
 └ ride/      진행 중인 탑승. 화면이 사라져도 계속돼야 해서 @Singleton RideTracker가 갖는다
    ├ domain/  RideTracker(앱 전체가 같이 보는 탑승 상태), 모델, 저장소 인터페이스
