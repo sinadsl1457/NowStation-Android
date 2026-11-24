@@ -102,3 +102,11 @@ interface ReservationAlarms {
     /** "5분 뒤 다시": 예약의 다음 회차와 따로 한 번 더. */
     fun snooze(id: String, at: ZonedDateTime)
 }
+
+/** 오전 8:10 / 오후 6:40. 예약 화면·목록·알림이 같이 쓴다. */
+object TimeText {
+    fun of(t: LocalTime): String {
+        val h12 = if (t.hour % 12 == 0) 12 else t.hour % 12
+        return "${if (t.hour < 12) "오전" else "오후"} $h12:${"%02d".format(t.minute)}"
+    }
+}

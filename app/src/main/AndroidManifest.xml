@@ -13,6 +13,10 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- 화면이 꺼져도 탑승 중 가속도 센서·갱신이 멈추지 않게 -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- 출발 예약: 나갈 시각 전 알림을 제시각에(사용자가 설정에서 허용, 예약 저장 전에 묻는다) -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- 재부팅하면 OS가 예약 알람을 지워서 다시 건다 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:name=".NowStationApplication"
@@ -42,5 +46,17 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="지하철 탑승 중 현재역·다음역을 잠금화면에 계속 보여 준다" />
         </service>
+
+        <receiver
+            android:name=".schedule.alarm.ReservationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
