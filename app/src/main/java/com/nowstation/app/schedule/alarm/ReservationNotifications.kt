@@ -17,7 +17,10 @@ import java.time.ZonedDateTime
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** 나갈 시각 전 알림: "10분 뒤 출발 예정이에요" + 탑승 시작 / 5분 뒤 다시. */
+/**
+ * 나갈 시각 전 알림을 계속 떠 있는 카드로(개발자 결정: 10분 전부터 상태 표시줄·잠금화면에 남은 시간이 보이게).
+ * 울릴 때 한 번 소리·팝업, 그 뒤엔 시스템이 나갈 시각까지 거꾸로 센다. 탑승 시작 / 5분 뒤 다시 / 닫기.
+ */
 @Singleton
 class ReservationNotifications @Inject constructor(@ApplicationContext private val context: Context) {
     private val manager = context.getSystemService(NotificationManager::class.java)
@@ -35,19 +38,31 @@ class ReservationNotifications @Inject constructor(@ApplicationContext private v
         ensureChannel()
         val departure = now.toLocalDate().atTime(r.time).atZone(now.zone).let { if (it.isBefore(now.minusHours(12))) it.plusDays(1) else it }
         // 알람은 정각보다 몇백 ms 늦게 깨어나서 버리면 "9분 뒤"가 된다 → 올림
-        val minutes = ((Duration.between(now, departure).seconds + 59) / 60).coerceAtLeast(0)
-        val title = if (minutes > 0) "${minutes}분 뒤 출발 예정이에요" else "지금 출발할 시각이에요"
+        val until = departure.toInstant().toEpochMilli()
+        val route = "${r.origin.name} → ${r.destination.name}"
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_train)
-            .setContentTitle(title)
-            .setContentText("${TimeText.of(r.time)} · ${r.origin.name} → ${r.destination.name}")
+            .setContentTitle("${TimeText.of(r.time)} 출발")
+            .setContentText("$route · 출발까지")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("$route · 출발까지"))
+            // 시스템이 나갈 시각까지 거꾸로 센다(앱이 깨어 있지 않아도)
+            .setWhen(until)
+            .setShowWhen(true)
+            .setUsesChronometer(true)
+            .setChronometerCountDown(true)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            // Android 16+: 상태 표시줄 칩·잠금화면 맨 위(탑승 중 알림과 같은 Live Update)
+            .setRequestPromotedOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(startRide(r.id, OPEN))
             .addAction(0, "탑승 시작", startRide(r.id, START))
             .addAction(0, "5분 뒤 다시", snooze(r.id))
-            .setAutoCancel(true)
+            .addAction(0, "닫기", close(r.id))
+            // 나갈 시각 10분 뒤에는 저절로 내린다
+            .setTimeoutAfter(Duration.between(now, departure).toMillis().coerceAtLeast(0) + GRACE_MILLIS)
             .build()
         manager.notify(notificationId(r.id), notification)
     }
@@ -70,6 +85,12 @@ class ReservationNotifications @Inject constructor(@ApplicationContext private v
         PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
     )
 
+    private fun close(id: String): PendingIntent = PendingIntent.getBroadcast(
+        context, 0,
+        Intent(context, ReservationReceiver::class.java).setAction(ReservationReceiver.ACTION_CLOSE).setData(AndroidReservationAlarms.uriOf(id)),
+        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+    )
+
     private fun notificationId(id: String) = NOTIFICATION_BASE + (id.hashCode() and 0xFFFF)
 
     companion object {
@@ -77,5 +98,6 @@ class ReservationNotifications @Inject constructor(@ApplicationContext private v
         const val START = "com.nowstation.app.action.START_RESERVATION"
         const val OPEN = "com.nowstation.app.action.OPEN_RESERVATION"
         private const val NOTIFICATION_BASE = 2_000
+        private const val GRACE_MILLIS = 10 * 60 * 1000L
     }
 }

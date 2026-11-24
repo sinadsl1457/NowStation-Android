@@ -27,6 +27,7 @@ class ReservationReceiver : BroadcastReceiver() {
                 reservations.onAlerted(r.id)
             }
             ACTION_SNOOZE_ALERT -> id?.let(reservations::find)?.let { notifications.show(it, now()) }
+            ACTION_CLOSE -> id?.let(notifications::dismiss)
             ACTION_SNOOZE -> id?.let {
                 notifications.dismiss(it)
                 reservations.snooze(it)
@@ -46,5 +47,6 @@ class ReservationReceiver : BroadcastReceiver() {
         const val ACTION_ALERT = "com.nowstation.app.action.RESERVATION_ALERT"
         const val ACTION_SNOOZE_ALERT = "com.nowstation.app.action.RESERVATION_SNOOZE_ALERT"
         const val ACTION_SNOOZE = "com.nowstation.app.action.RESERVATION_SNOOZE"
+        const val ACTION_CLOSE = "com.nowstation.app.action.RESERVATION_CLOSE"
     }
 }
