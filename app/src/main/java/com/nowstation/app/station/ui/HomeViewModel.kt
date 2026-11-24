@@ -111,6 +111,13 @@ class HomeViewModel @Inject constructor(
         _state.update { it.copy(origin = route.origin, destination = route.destination) }
     }
 
+    /** 예약 알림의 "탑승 시작": 그 경로를 칸에 채우고 바로 시작한다. */
+    fun startRoute(origin: Station, destination: Station) {
+        if (_state.value.isStarting) return
+        _state.update { it.copy(origin = origin, destination = destination, searching = false, query = "") }
+        start()
+    }
+
     fun start() {
         val current = _state.value
         val origin = current.origin ?: return

@@ -34,7 +34,8 @@ class ReservationNotifications @Inject constructor(@ApplicationContext private v
     fun show(r: Reservation, now: ZonedDateTime) {
         ensureChannel()
         val departure = now.toLocalDate().atTime(r.time).atZone(now.zone).let { if (it.isBefore(now.minusHours(12))) it.plusDays(1) else it }
-        val minutes = Duration.between(now, departure).toMinutes().coerceAtLeast(0)
+        // 알람은 정각보다 몇백 ms 늦게 깨어나서 버리면 "9분 뒤"가 된다 → 올림
+        val minutes = ((Duration.between(now, departure).seconds + 59) / 60).coerceAtLeast(0)
         val title = if (minutes > 0) "${minutes}분 뒤 출발 예정이에요" else "지금 출발할 시각이에요"
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_train)

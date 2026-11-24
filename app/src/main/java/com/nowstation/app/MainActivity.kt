@@ -2,7 +2,21 @@ package com.nowstation.app
 
 import android.Manifest
 import android.os.Build
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import com.nowstation.app.schedule.alarm.ReservationNotifications
+import com.nowstation.app.schedule.domain.Reservation
+import com.nowstation.app.schedule.domain.Reservations
+import com.nowstation.app.schedule.ui.ReservationList
+import com.nowstation.app.schedule.ui.ReservationSheet
+import com.nowstation.app.schedule.ui.ReservationSheetActions
+import com.nowstation.app.schedule.ui.ReservationViewModel
+import com.nowstation.app.schedule.ui.SaveOutcome
+import java.time.Clock
+import java.time.ZonedDateTime
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -52,6 +66,17 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var tracker: RideTracker
     @Inject lateinit var guide: GuideStore
     @Inject lateinit var alertSettings: AlertSettings
+    @Inject lateinit var reservations: Reservations
+    @Inject lateinit var reservationNotifications: ReservationNotifications
+    @Inject lateinit var clock: Clock
+
+    /** 예약 알림에서 들어온 부탁(탑승 시작·열기). 화면이 처리하면 비운다. */
+    private val reservationIntent = mutableStateOf<Intent?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (intent.data != null) reservationIntent.value = intent
+    }
 
     /** 잠금화면 진행 중 알림에 필요. 거부해도 앱 화면으로는 쓸 수 있다. */
     private fun askNotificationPermission() {
@@ -71,6 +96,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         // 처음 실행이면 가이드 마지막 장 버튼에서 묻는다(이유를 보여 준 뒤). 이미 본 사람은 전처럼 켤 때
         if (guide.seen) askNotificationPermission()
+        if (savedInstanceState == null && intent?.data != null) reservationIntent.value = intent
         setContent {
             NowStationTheme {
                 val ride by tracker.state.collectAsStateWithLifecycle()
@@ -97,6 +123,31 @@ class MainActivity : ComponentActivity() {
                 }
                 val current = ride
                 val home: HomeViewModel = hiltViewModel()
+                val reserve: ReservationViewModel = hiltViewModel()
+                val reservationList by reserve.list.collectAsStateWithLifecycle()
+                val editor by reserve.editor.collectAsStateWithLifecycle()
+                val today = remember(reservationList) { ZonedDateTime.now(clock).withZoneSameInstant(Reservation.ZONE).toLocalDate() }
+                val exactAlarmSettings = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                    if (reserve.save() == SaveOutcome.NeedsExactAlarm) {
+                        Toast.makeText(this@MainActivity, "알람 및 리마인더를 허용해야 제시각에 알려 드릴 수 있어요", Toast.LENGTH_LONG).show()
+                    }
+                }
+                val pending by reservationIntent
+                LaunchedEffect(pending) {
+                    val i = pending ?: return@LaunchedEffect
+                    reservationIntent.value = null
+                    val id = i.data?.lastPathSegment ?: return@LaunchedEffect
+                    reservationNotifications.dismiss(id)
+                    val r = reservations.find(id)
+                    if (i.action == ReservationNotifications.START && r != null) {
+                        if (tracker.state.value != null) {
+                            Toast.makeText(this@MainActivity, "이미 탑승 중이에요", Toast.LENGTH_SHORT).show()
+                        } else {
+                            intro = null
+                            home.startRoute(r.origin, r.destination)
+                        }
+                    }
+                }
                 if (current != null) {
                     LaunchedEffect(Unit) { intro = null }
                     // 탑승마다 새로(끝난 탑승의 노선도를 계속 받지 않게)
@@ -114,12 +165,39 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     val actions = remember(vm) {
-                        HomeActions(vm::onQueryChange, vm::pick, vm::edit, vm::swap, vm::start, vm::useRecent, vm::closeSearch, onShowGuide = { showGuide = true }, onShowSettings = { showSettings = true })
+                        HomeActions(
+                            vm::onQueryChange, vm::pick, vm::edit, vm::swap, vm::start, vm::useRecent, vm::closeSearch,
+                            onShowGuide = { showGuide = true }, onShowSettings = { showSettings = true },
+                            onReserve = {
+                                val s = vm.state.value
+                                if (s.origin != null && s.destination != null) reserve.create(s.origin, s.destination)
+                            },
+                        )
                     }
                     val running = intro
                     CompositionLocalProvider(LocalLaunchIntro provides running) {
                         Box {
-                            HomeScreen(state, actions)
+                            HomeScreen(state, actions) {
+                                ReservationList(reservationList, today, onEdit = reserve::edit, onToggle = reserve::setEnabled)
+                            }
+                            editor?.let { e ->
+                                ReservationSheet(
+                                    e, today,
+                                    ReservationSheetActions(
+                                        onClose = reserve::close, onStep = reserve::step, onOpenDial = reserve::openDial,
+                                        onSetTime = reserve::setTime, onLead = reserve::setLead, onPage = reserve::showPage,
+                                        onToggleDay = reserve::toggleDay,
+                                        onSave = {
+                                            // 처음 예약할 때 "알람 및 리마인더" 권한부터(개발자 결정). 설정에서 돌아오면 다시 저장해 본다
+                                            if (reserve.save() == SaveOutcome.NeedsExactAlarm && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                                Toast.makeText(this@MainActivity, "제시각에 알리려면 알람 및 리마인더를 허용해 주세요", Toast.LENGTH_LONG).show()
+                                                exactAlarmSettings.launch(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
+                                            }
+                                        },
+                                        onDelete = reserve::delete,
+                                    ),
+                                )
+                            }
                             AnimatedVisibility(
                                 visible = showSettings,
                                 enter = slideInHorizontally { it },

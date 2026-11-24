@@ -18,6 +18,11 @@ com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는
 ├ station/   역 검색 + 홈 화면. 상태는 홈 화면 ViewModel이 갖고 화면과 함께 사라진다
 ├ settings/  설정. 모두 앱 안에서: 알림 스위치(AlertSettings: 갈아타기·내릴 역·진동, RideService가 따름. 진행 중 알림은 포그라운드 서비스라 못 끔), 사용법 다시 보기, 문의하기(ContactViewModel → 서버 POST /api/feedback), 개인정보처리방침(WebView, 서버 /privacy), 라이선스, 버전. 개인정보처리방침은 Play 정책상 앱 안에서도 열려야 한다
 ├ guide/     처음 실행 가이드 4장(+ 봤는지 저장). 홈과 따로 생기고 사라져서(처음 한 번·다시 보기) 따로 둠. 알림 권한은 마지막 장 버튼에서 묻는다
+├ schedule/  출발 예약(나갈 시각 전 알림). 홈 화면이 사라져도 알람·재부팅 뒤까지 살아야 해서 @Singleton Reservations가 목록과 알람을 함께 맞춘다
+│  ├ domain/  Reservation(다음 알림 시각, 순수 Kotlin + 서울 시각 고정), RepeatLabel(안 함·매일·주중·주말·화~토), Reservations
+│  ├ data/    폰 안 저장(한 키 JSON, 서버로 보내지 않음)
+│  ├ alarm/   AlarmManager(setAlarmClock, "알람 및 리마인더" 권한은 처음 저장할 때 설정 화면에서 받음), 알림(탑승 시작·5분 뒤 다시), 재부팅·시각 변경 뒤 다시 걸기
+│  └ ui/      예약 시트(반복은 iOS 알람처럼 요일 목록), 입체 순환선 시계판(5분 단위만), 홈 예약 목록. 홈은 자리(slot)만 준다
 └ ride/      진행 중인 탑승. 화면이 사라져도 계속돼야 해서 @Singleton RideTracker가 갖는다
    ├ domain/  RideTracker(앱 전체가 같이 보는 탑승 상태), 모델, 저장소 인터페이스
    ├ data/    서버 탑승 API
@@ -29,6 +34,8 @@ com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는
 - 의존 방향: ui → domain ← data. domain은 Android를 모른다(RideTracker도 순수 Kotlin + 주입된 Clock).
 - ViewModel은 Context를 모른다. 서비스 시작은 `RideServiceLauncher` 인터페이스로.
 - 화면 이동 라이브러리 없이 "탑승 중이면 탑승 화면, 아니면 홈"으로 고른다(화면이 둘뿐).
+- 예약 결정(개발자): 기본은 한 번(오늘만, 지난 시각이면 저장 막음), 반복은 고른 요일마다 끌 때까지(종료일 없음), 시각은 5분 단위, 미리 알림 5·10·15·20분(기본 10). 한 번짜리는 울린 뒤 꺼진 채 목록에 남고, 다시 켜면 오늘 지났으면 내일. 알림의 "탑승 시작"은 앱을 열어 그 경로로 바로 시작한다(앱이 앞에 있어야 포그라운드 서비스를 띄울 수 있음)
+- 예약 확인: 저장 뒤 `adb shell dumpsys alarm | grep -A2 RESERVATION_ALERT`로 걸린 시각, 권한은 `adb shell appops get com.taektoy.nowstation SCHEDULE_EXACT_ALARM`
 - 앱을 새로 켜면 런치 애니메이션(`core/ui/LaunchIntro`: 시작 화면 아이콘 → 홈 머리의 노선 그림, 홈은 머리 높이·투명도만 따른다) 뒤 처음 한 번 가이드가 올라온다
 - 로직 없는 UseCase는 만들지 않는다. ViewModel → 저장소/RideTracker 직접.
 - 시간은 `Clock` 주입.

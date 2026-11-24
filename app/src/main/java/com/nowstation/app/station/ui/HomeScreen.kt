@@ -30,6 +30,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NorthWest
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.Train
+import androidx.compose.material.icons.outlined.Alarm
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
@@ -80,21 +81,23 @@ class HomeActions(
     val onCloseSearch: () -> Unit,
     val onShowGuide: () -> Unit = {},
     val onShowSettings: () -> Unit = {},
+    /** 지금 칸의 경로로 출발 예약 시트를 연다. */
+    val onReserve: () -> Unit = {},
 )
 
 /** 홈. 역 검색은 칸을 눌렀을 때만 덮어서 연다(첫 화면에 긴 목록을 깔지 않음). */
 @Composable
-fun HomeScreen(state: HomeUiState, actions: HomeActions) {
+fun HomeScreen(state: HomeUiState, actions: HomeActions, reservations: @Composable () -> Unit = {}) {
     if (state.searching) {
         BackHandler(onBack = actions.onCloseSearch)
         StationSearchScreen(state, actions)
     } else {
-        HomeContent(state, actions)
+        HomeContent(state, actions, reservations)
     }
 }
 
 @Composable
-private fun HomeContent(state: HomeUiState, actions: HomeActions) {
+private fun HomeContent(state: HomeUiState, actions: HomeActions, reservations: @Composable () -> Unit) {
     StatusBarIcons(dark = false)
     Column(Modifier.fillMaxSize().background(Ground).verticalScroll(rememberScrollState())) {
         Header(onShowSettings = actions.onShowSettings)
@@ -106,6 +109,8 @@ private fun HomeContent(state: HomeUiState, actions: HomeActions) {
         ) {
             RouteCard(state, actions)
             Column(Modifier.alpha(intro?.below ?: 1f), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                // 예약 목록은 예약 기능(schedule)이 그린다: 홈은 자리만 준다
+                reservations()
                 if (state.recent.isNotEmpty()) RecentRoutes(state.recent, state.isStarting, actions.onUseRecent) else HowItWorks()
                 if (state.lines.isNotEmpty()) SupportedLines(state.lines)
             }
@@ -211,16 +216,35 @@ private fun RouteCard(state: HomeUiState, actions: HomeActions) {
             Text("타는 역과 내릴 역이 같아요", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = 26.dp, top = 4.dp))
         }
         Spacer(Modifier.height(12.dp))
-        Button(
-            onClick = actions.onStart,
-            enabled = state.canStart,
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth().height(54.dp),
-        ) {
-            Icon(Icons.Filled.Train, contentDescription = null, modifier = Modifier.size(20.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(if (state.isStarting) "시작하는 중…" else "탑승 시작", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Button(
+                onClick = actions.onStart,
+                enabled = state.canStart,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.weight(1f).height(54.dp),
+            ) {
+                Icon(Icons.Filled.Train, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(if (state.isStarting) "시작하는 중…" else "탑승 시작", fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            }
+            ReserveButton(enabled = state.canStart, onClick = actions.onReserve)
         }
+    }
+}
+
+/** 지금 칸의 경로로 출발 예약(나갈 시각 전 알림). 탑승 시작과 같은 조건에서만 누를 수 있다. */
+@Composable
+private fun ReserveButton(enabled: Boolean, onClick: () -> Unit) {
+    val tint = if (enabled) Brand else Muted.copy(alpha = 0.4f)
+    Column(
+        Modifier.width(64.dp).height(54.dp)
+            .border(1.5.dp, if (enabled) Color(0xFFC9D3EA) else Hairline, RoundedCornerShape(14.dp))
+            .clickable(enabled = enabled, onClickLabel = "출발 예약", onClick = onClick),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Icon(Icons.Outlined.Alarm, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+        Text("예약", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = tint)
     }
 }
 
