@@ -140,8 +140,6 @@ class MainActivity : ComponentActivity() {
                     reservationNotifications.dismiss(id)
                     val r = reservations.find(id)
                     if (i.action == ReservationNotifications.START && r != null) {
-                        // 예약 카드는 내리고 탑승 중 알림이 대신 뜬다
-                        reservationNotifications.hideCard(id)
                         if (tracker.state.value != null) {
                             Toast.makeText(this@MainActivity, "이미 탑승 중이에요", Toast.LENGTH_SHORT).show()
                         } else {

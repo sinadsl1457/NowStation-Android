@@ -93,32 +93,6 @@ interface ReservationStore {
     fun save(list: List<Reservation>)
 }
 
-/**
- * 저장하는 순간 오늘 곧 나갈 예약을 잠금화면에 계속 띄운다(iOS Live Activity와 같은 규칙: 오늘, 8시간 안).
- * 남은 시간은 시스템이 줄여 그린다.
- */
-interface ReservationLiveDisplay {
-    fun showCard(r: Reservation, departure: ZonedDateTime)
-    fun hideCard(id: String)
-
-    companion object {
-        const val MAX_HOURS = 8L
-
-        /** 오늘 회차의 나갈 시각이 지금부터 8시간 안이면 그 시각. 아니면 null(띄우지 않는다). */
-        fun departureToShow(r: Reservation, now: ZonedDateTime): ZonedDateTime? {
-            if (!r.enabled) return null
-            val today = now.toLocalDate()
-            if (r.repeats) {
-                if (now.dayOfWeek !in r.days) return null
-            } else if (r.date != today) {
-                return null
-            }
-            val departure = today.atTime(r.time).atZone(now.zone)
-            return departure.takeIf { it.isAfter(now) && !it.isAfter(now.plusHours(MAX_HOURS)) }
-        }
-    }
-}
-
 /** 정해진 시각에 깨워 달라는 부탁. 구현은 AlarmManager. */
 interface ReservationAlarms {
     /** 나갈 시각 직전 알림을 정확히 울리려면 "알람 및 리마인더" 권한이 필요하다(Android 12+). */
