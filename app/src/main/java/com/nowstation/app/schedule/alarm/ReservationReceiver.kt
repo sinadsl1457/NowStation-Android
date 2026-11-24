@@ -28,6 +28,7 @@ class ReservationReceiver : BroadcastReceiver() {
             }
             ACTION_SNOOZE_ALERT -> id?.let(reservations::find)?.let { notifications.show(it, now()) }
             ACTION_CLOSE -> id?.let(notifications::dismiss)
+            ACTION_REFRESH_CARD -> id?.let(reservations::find)?.let { notifications.show(it, now(), refresh = true) }
             ACTION_SNOOZE -> id?.let {
                 notifications.dismiss(it)
                 reservations.snooze(it)
@@ -48,5 +49,6 @@ class ReservationReceiver : BroadcastReceiver() {
         const val ACTION_SNOOZE_ALERT = "com.nowstation.app.action.RESERVATION_SNOOZE_ALERT"
         const val ACTION_SNOOZE = "com.nowstation.app.action.RESERVATION_SNOOZE"
         const val ACTION_CLOSE = "com.nowstation.app.action.RESERVATION_CLOSE"
+        const val ACTION_REFRESH_CARD = "com.nowstation.app.action.RESERVATION_REFRESH_CARD"
     }
 }

@@ -168,4 +168,13 @@ class ReservationsTest {
         assertEquals("월 수 금", RepeatLabel.of(setOf(MONDAY, WEDNESDAY, FRIDAY)))
         assertEquals("월 화", RepeatLabel.of(setOf(MONDAY, TUESDAY)))
     }
+
+    @Test
+    fun `나갈 시각까지 5분이 채 안 남았으면 5분 뒤 다시를 뺀다`() {
+        val departure = at("0810")
+        assertTrue(Reservation.canSnooze(departure, at("0800"))) // 10분 전
+        assertTrue(Reservation.canSnooze(departure, at("0805").plusNanos(400_000_000))) // 5분 전 알림이 0.4초 늦게 깨어남
+        assertFalse(Reservation.canSnooze(departure, at("0806"))) // 4분 남음
+        assertFalse(Reservation.canSnooze(departure, at("0810")))
+    }
 }

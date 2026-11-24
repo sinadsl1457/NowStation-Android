@@ -2,6 +2,7 @@ package com.nowstation.app.schedule.domain
 
 import com.nowstation.app.station.domain.Station
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -54,6 +55,16 @@ data class Reservation(
         const val DEFAULT_LEAD = 10
         const val SNOOZE_MINUTES = 5L
         const val STEP_MINUTES = 5
+
+        /** 알람이 몇백 ms 늦게 깨어나도 "5분 전" 알림에 버튼이 남게 두는 여유. */
+        private const val SNOOZE_SLACK_SECONDS = 30L
+
+        /**
+         * "5분 뒤 다시"를 보여 줄지: 나갈 시각까지 5분이 채 안 남았으면 다시 알려 줄 수 없어서 뺀다(개발자 결정).
+         * 남은 시간이 5분 밑으로 내려가는 순간 버튼 없는 카드로 바꿔 끼우는 시각도 이 기준.
+         */
+        fun canSnooze(departure: ZonedDateTime, now: ZonedDateTime): Boolean =
+            Duration.between(now, departure).seconds >= SNOOZE_MINUTES * 60 - SNOOZE_SLACK_SECONDS
 
         /** 지하철 시간이라 서울 시각으로 고정(폰 시간대를 바꿔도 출발 시각은 그대로). */
         val ZONE: ZoneId = ZoneId.of("Asia/Seoul")
