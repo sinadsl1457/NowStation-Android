@@ -101,6 +101,12 @@ class ReservationViewModel @Inject constructor(
 
     fun setEnabled(id: String, on: Boolean) = reservations.setEnabled(id, on)
 
+    /** 목록에서 밀어 지우기. 같은 예약을 시트에서 고치던 중이면 시트도 닫는다(지운 예약을 다시 저장하지 않게). */
+    fun remove(id: String) {
+        reservations.delete(id)
+        if (_editor.value?.id == id) close()
+    }
+
     private fun open(e: EditorState) = _editor.update { withPassed(e) }
 
     private fun change(edit: (EditorState) -> EditorState) = _editor.update { it?.let { e -> withPassed(edit(e)) } }

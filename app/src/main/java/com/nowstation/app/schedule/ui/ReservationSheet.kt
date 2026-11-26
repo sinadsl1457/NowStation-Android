@@ -247,13 +247,3 @@ fun ReservationRow(r: Reservation, today: LocalDate, onEdit: () -> Unit, onToggl
         )
     }
 }
-
-/** 홈의 "예약" 칸. 예약이 없으면 칸째로 숨긴다(처음 쓰는 사람의 홈을 그대로). */
-@Composable
-fun ReservationList(list: List<Reservation>, today: LocalDate, onEdit: (String) -> Unit, onToggle: (String, Boolean) -> Unit) {
-    if (list.isEmpty()) return
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("예약", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFF2A3348), modifier = Modifier.padding(horizontal = 4.dp))
-        list.forEach { r -> ReservationRow(r, today, onEdit = { onEdit(r.id) }, onToggle = { onToggle(r.id, it) }) }
-    }
-}

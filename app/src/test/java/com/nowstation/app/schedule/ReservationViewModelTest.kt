@@ -106,4 +106,19 @@ class ReservationViewModelTest {
 
         assertEquals(LocalTime.of(9, 0), store.saved.single().time)
     }
+
+    @Test
+    fun `목록에서 밀어 지우면 예약과 알람이 함께 사라지고, 그 예약을 고치던 시트도 닫힌다`() {
+        vm.create(taepyeong, gangnam)
+        vm.save()
+        val id = store.saved.single().id
+        assertTrue(id in alarms.set)
+
+        vm.edit(id)
+        vm.remove(id)
+
+        assertTrue(store.saved.isEmpty())
+        assertTrue(alarms.set.isEmpty())
+        assertNull(vm.editor.value)
+    }
 }

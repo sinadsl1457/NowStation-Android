@@ -14,7 +14,7 @@
 ## 구조 — 기능 폴더는 "상태를 누가 갖고 언제 사라지나"로 나눈다
 ```
 com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는 com.taektoy.nowstation)
-├ core/      결과·오류 타입(AppResult, safeApiCall), 네트워크(Retrofit), 테마, 저장소 연결(Hilt)
+├ core/      결과·오류 타입(AppResult, safeApiCall), 네트워크(Retrofit), 테마, 저장소 연결(Hilt). 홈 위에 덮는 밝은 화면은 `DarkStatusBarIcons()`로 상태 표시줄 글자를 어둡게
 ├ station/   역 검색 + 홈 화면. 상태는 홈 화면 ViewModel이 갖고 화면과 함께 사라진다
 ├ settings/  설정. 모두 앱 안에서: 알림 스위치(AlertSettings: 갈아타기·내릴 역·진동, RideService가 따름. 진행 중 알림은 포그라운드 서비스라 못 끔), 사용법 다시 보기, 문의하기(ContactViewModel → 서버 POST /api/feedback), 개인정보처리방침(WebView, 서버 /privacy), 라이선스, 버전. 개인정보처리방침은 Play 정책상 앱 안에서도 열려야 한다
 ├ guide/     처음 실행 가이드 4장(+ 봤는지 저장). 홈과 따로 생기고 사라져서(처음 한 번·다시 보기) 따로 둠. 알림 권한은 마지막 장 버튼에서 묻는다
@@ -22,7 +22,7 @@ com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는
 │  ├ domain/  Reservation(다음 알림 시각, 순수 Kotlin + 서울 시각 고정), RepeatLabel(안 함·매일·주중·주말·화~토), Reservations
 │  ├ data/    폰 안 저장(한 키 JSON, 서버로 보내지 않음)
 │  ├ alarm/   AlarmManager(setAlarmClock). 저장할 때 알림 허용 → "알람 및 리마인더" 순서로 확인하고, 둘 중 하나라도 꺼져 있으면 저장하지 않는다(iOS와 같음: 알람만 울리고 카드가 안 보이는 예약을 만들지 않음). 알림은 가이드에서 한 번 거절했으면 다시 묻고, 두 번 거절했거나 앱·예약 채널 알림을 껐으면 알림 설정 화면으로, 알림은 10분 전부터 계속 떠 있는 카드(개발자 결정: 울릴 때 한 번 소리·팝업, 나갈 시각까지 시스템이 거꾸로 셈, Live Update 칩, 탑승 시작·5분 뒤 다시·닫기, 나갈 시각 10분 뒤 저절로 내림), 재부팅·시각 변경 뒤 다시 걸기
-│  └ ui/      예약 시트(반복은 iOS 알람처럼 요일 목록), 입체 순환선 시계판(5분 단위만), 홈 예약 목록. 홈은 자리(slot)만 준다
+│  └ ui/      예약 시트(반복은 iOS 알람처럼 요일 목록), 입체 순환선 시계판(5분 단위만), 홈 예약 목록. 홈은 자리(slot)만 준다. 홈에는 시각순 4개까지(개발자 결정: 많으면 홈이 길어짐), 넘치면 "모두 보기" → 전체 목록(설정처럼 옆에서 밀려 들어옴). 줄을 왼쪽으로 밀면 수정·삭제(iOS 목록처럼, 낭독기는 사용자 지정 동작)
 └ ride/      진행 중인 탑승. 화면이 사라져도 계속돼야 해서 @Singleton RideTracker가 갖는다
    ├ domain/  RideTracker(앱 전체가 같이 보는 탑승 상태), 모델, 저장소 인터페이스
    ├ data/    서버 탑승 API

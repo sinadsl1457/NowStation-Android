@@ -59,14 +59,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -74,6 +72,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nowstation.app.BuildConfig
 import com.nowstation.app.core.ui.Brand
+import com.nowstation.app.core.ui.DarkStatusBarIcons
 import com.nowstation.app.core.ui.Ground
 import com.nowstation.app.core.ui.Muted
 
@@ -337,17 +336,6 @@ private const val APACHE_NOTICE = """Licensed under the Apache License, Version 
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License."""
-
-/** 밝은 바탕이라 상태 표시줄 글자를 어둡게. 닫으면 홈(파란 머리)의 흰 글자로 되돌린다. */
-@Composable
-private fun DarkStatusBarIcons() {
-    val view = LocalView.current
-    DisposableEffect(Unit) {
-        val controller = WindowCompat.getInsetsController((view.context as Activity).window, view)
-        controller.isAppearanceLightStatusBars = true
-        onDispose { controller.isAppearanceLightStatusBars = false }
-    }
-}
 
 @Composable
 private fun TopBar(title: String, onBack: () -> Unit) {

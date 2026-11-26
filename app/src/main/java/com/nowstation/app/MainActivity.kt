@@ -11,6 +11,8 @@ import com.nowstation.app.schedule.alarm.ReservationNotifications
 import com.nowstation.app.schedule.domain.Reservation
 import com.nowstation.app.schedule.domain.Reservations
 import com.nowstation.app.schedule.ui.ReservationList
+import com.nowstation.app.schedule.ui.ReservationListScreen
+import com.nowstation.app.schedule.ui.ReservationRowActions
 import com.nowstation.app.schedule.ui.ReservationSheet
 import com.nowstation.app.schedule.ui.ReservationSheetActions
 import com.nowstation.app.schedule.ui.ReservationViewModel
@@ -112,6 +114,7 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 var showGuide by remember { mutableStateOf(!guide.seen) }
                 var showSettings by remember { mutableStateOf(false) }
+                var showAllReservations by remember { mutableStateOf(false) }
                 LaunchedEffect(intro) {
                     val running = intro ?: return@LaunchedEffect
                     try {
@@ -213,8 +216,18 @@ class MainActivity : ComponentActivity() {
                     val running = intro
                     CompositionLocalProvider(LocalLaunchIntro provides running) {
                         Box {
+                            val rowActions = remember(reserve) { ReservationRowActions(onEdit = reserve::edit, onToggle = reserve::setEnabled, onDelete = reserve::remove) }
                             HomeScreen(state, actions) {
-                                ReservationList(reservationList, today, onEdit = reserve::edit, onToggle = reserve::setEnabled)
+                                ReservationList(reservationList, today, rowActions, onShowAll = { showAllReservations = true })
+                            }
+                            // 다 지우면 빈 화면에 남지 않게 홈으로
+                            LaunchedEffect(reservationList.isEmpty()) { if (reservationList.isEmpty()) showAllReservations = false }
+                            AnimatedVisibility(
+                                visible = showAllReservations,
+                                enter = slideInHorizontally { it },
+                                exit = slideOutHorizontally { it },
+                            ) {
+                                ReservationListScreen(reservationList, today, rowActions, onBack = { showAllReservations = false })
                             }
                             editor?.let { e ->
                                 ReservationSheet(
