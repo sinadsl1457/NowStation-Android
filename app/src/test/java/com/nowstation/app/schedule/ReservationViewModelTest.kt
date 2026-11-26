@@ -27,9 +27,10 @@ class ReservationViewModelTest {
         override fun save(list: List<Reservation>) { saved = list }
     }
 
-    private class FakeAlarms(var exact: Boolean = true) : ReservationAlarms {
+    private class FakeAlarms(var exact: Boolean = true, var notify: Boolean = true) : ReservationAlarms {
         val set = mutableMapOf<String, ZonedDateTime>()
         override fun canExact() = exact
+        override fun canNotify() = notify
         override fun set(id: String, at: ZonedDateTime) { set[id] = at }
         override fun cancel(id: String) { set.remove(id) }
         override fun snooze(id: String, at: ZonedDateTime) = Unit
@@ -61,6 +62,22 @@ class ReservationViewModelTest {
         assertTrue(store.saved.isEmpty())
 
         alarms.exact = true // 설정에서 허용하고 돌아옴
+        assertEquals(SaveOutcome.Saved, vm.save())
+    }
+
+    @Test
+    fun `알림이 꺼져 있으면 알람 권한보다 먼저 알림 허용을 받으러 가고 저장하지 않는다`() {
+        alarms.notify = false
+        alarms.exact = false
+        vm.create(taepyeong, gangnam)
+
+        // 알람만 울리고 카드가 안 뜨는 예약을 만들지 않는다(iOS와 같음)
+        assertEquals(SaveOutcome.NeedsNotification, vm.save())
+        assertTrue(store.saved.isEmpty())
+
+        alarms.notify = true // 알림을 허용하고 돌아옴 → 이어서 알람 권한
+        assertEquals(SaveOutcome.NeedsExactAlarm, vm.save())
+        alarms.exact = true
         assertEquals(SaveOutcome.Saved, vm.save())
     }
 

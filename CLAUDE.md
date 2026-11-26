@@ -21,7 +21,7 @@ com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는
 ├ schedule/  출발 예약(나갈 시각 전 알림). 홈 화면이 사라져도 알람·재부팅 뒤까지 살아야 해서 @Singleton Reservations가 목록과 알람을 함께 맞춘다
 │  ├ domain/  Reservation(다음 알림 시각, 순수 Kotlin + 서울 시각 고정), RepeatLabel(안 함·매일·주중·주말·화~토), Reservations
 │  ├ data/    폰 안 저장(한 키 JSON, 서버로 보내지 않음)
-│  ├ alarm/   AlarmManager(setAlarmClock, "알람 및 리마인더" 권한은 처음 저장할 때 설정 화면에서 받음), 알림은 10분 전부터 계속 떠 있는 카드(개발자 결정: 울릴 때 한 번 소리·팝업, 나갈 시각까지 시스템이 거꾸로 셈, Live Update 칩, 탑승 시작·5분 뒤 다시·닫기, 나갈 시각 10분 뒤 저절로 내림), 재부팅·시각 변경 뒤 다시 걸기
+│  ├ alarm/   AlarmManager(setAlarmClock). 저장할 때 알림 허용 → "알람 및 리마인더" 순서로 확인하고, 둘 중 하나라도 꺼져 있으면 저장하지 않는다(iOS와 같음: 알람만 울리고 카드가 안 보이는 예약을 만들지 않음). 알림은 가이드에서 한 번 거절했으면 다시 묻고, 두 번 거절했거나 앱·예약 채널 알림을 껐으면 알림 설정 화면으로, 알림은 10분 전부터 계속 떠 있는 카드(개발자 결정: 울릴 때 한 번 소리·팝업, 나갈 시각까지 시스템이 거꾸로 셈, Live Update 칩, 탑승 시작·5분 뒤 다시·닫기, 나갈 시각 10분 뒤 저절로 내림), 재부팅·시각 변경 뒤 다시 걸기
 │  └ ui/      예약 시트(반복은 iOS 알람처럼 요일 목록), 입체 순환선 시계판(5분 단위만), 홈 예약 목록. 홈은 자리(slot)만 준다
 └ ride/      진행 중인 탑승. 화면이 사라져도 계속돼야 해서 @Singleton RideTracker가 갖는다
    ├ domain/  RideTracker(앱 전체가 같이 보는 탑승 상태), 모델, 저장소 인터페이스
@@ -35,7 +35,7 @@ com.nowstation.app   (코드 패키지. 스토어·기기에서 쓰는 앱 ID는
 - ViewModel은 Context를 모른다. 서비스 시작은 `RideServiceLauncher` 인터페이스로.
 - 화면 이동 라이브러리 없이 "탑승 중이면 탑승 화면, 아니면 홈"으로 고른다(화면이 둘뿐).
 - 예약 결정(개발자): 기본은 한 번(오늘만, 지난 시각이면 저장 막음), 반복은 고른 요일마다 끌 때까지(종료일 없음), 시각은 5분 단위, 미리 알림 5·10·15·20분(기본 10). 한 번짜리는 울린 뒤 꺼진 채 목록에 남고, 다시 켜면 오늘 지났으면 내일. 알림의 "탑승 시작"은 앱을 열어 그 경로로 바로 시작한다(앱이 앞에 있어야 포그라운드 서비스를 띄울 수 있음)
-- 예약 확인: 저장 뒤 `adb shell dumpsys alarm | grep -A2 RESERVATION_ALERT`로 걸린 시각, 권한은 `adb shell appops get com.taektoy.nowstation SCHEDULE_EXACT_ALARM`
+- 예약 확인: 저장 뒤 `adb shell dumpsys alarm | grep -A2 RESERVATION_ALERT`로 걸린 시각, 권한은 `adb shell appops get com.taektoy.nowstation SCHEDULE_EXACT_ALARM`. 알림을 한 번 거절한 상태는 `pm revoke ... POST_NOTIFICATIONS` + `pm set-permission-flags ... user-set`(두 번 거절은 `user-fixed`까지)
 - 앱을 새로 켜면 런치 애니메이션(`core/ui/LaunchIntro`: 시작 화면 아이콘 → 홈 머리의 노선 그림, 홈은 머리 높이·투명도만 따른다) 뒤 처음 한 번 가이드가 올라온다
 - 로직 없는 UseCase는 만들지 않는다. ViewModel → 저장소/RideTracker 직접.
 - 시간은 `Clock` 주입.

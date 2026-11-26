@@ -41,6 +41,8 @@ data class EditorState(
 /** 저장을 눌렀을 때 화면이 할 일. */
 sealed interface SaveOutcome {
     data object Saved : SaveOutcome
+    /** 알림 허용을 받으러(가이드에서 거절한 사람). 알람 권한보다 먼저 묻는다. */
+    data object NeedsNotification : SaveOutcome
     /** "알람 및 리마인더" 권한을 받으러 설정 화면으로(개발자 결정: 처음 예약할 때 받는다). */
     data object NeedsExactAlarm : SaveOutcome
     data object Blocked : SaveOutcome
@@ -84,6 +86,7 @@ class ReservationViewModel @Inject constructor(
     fun save(): SaveOutcome {
         val e = _editor.value ?: return SaveOutcome.Blocked
         if (!e.canSave) return SaveOutcome.Blocked
+        if (!alarms.canNotify()) return SaveOutcome.NeedsNotification
         if (!alarms.canExact()) return SaveOutcome.NeedsExactAlarm
         reservations.save(e.id, e.origin, e.destination, e.time, e.days, e.leadMinutes)
         close()

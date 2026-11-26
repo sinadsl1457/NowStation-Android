@@ -87,6 +87,13 @@ class MainActivity : ComponentActivity() {
 
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
+    private fun toast(text: String) = Toast.makeText(this, text, Toast.LENGTH_LONG).show()
+
+    private companion object {
+        /** iOS 예약 시트의 안내와 같은 문구. */
+        const val NOTIFICATION_OFF = "예약한 시각에 알려 드리려면 알림을 허용해 주세요"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // 시스템 시작 화면이 서서히 사라지면 아이콘이 잠깐 비었다가 다시 나타난다 → 바로 걷어 내고 같은 자리의 앱 그림(LaunchIntro)이 이어 그린다
@@ -127,9 +134,38 @@ class MainActivity : ComponentActivity() {
                 val reservationList by reserve.list.collectAsStateWithLifecycle()
                 val editor by reserve.editor.collectAsStateWithLifecycle()
                 val today = remember(reservationList) { ZonedDateTime.now(clock).withZoneSameInstant(Reservation.ZONE).toLocalDate() }
+                // 저장 순서: 알림 허용 → "알람 및 리마인더"(개발자 결정). 허용하고 돌아오면 다시 저장해 보고, 그래도 꺼져 있으면 저장하지 않고 알린다
                 val exactAlarmSettings = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                    if (reserve.save() == SaveOutcome.NeedsExactAlarm) {
-                        Toast.makeText(this@MainActivity, "알람 및 리마인더를 허용해야 제시각에 알려 드릴 수 있어요", Toast.LENGTH_LONG).show()
+                    when (reserve.save()) {
+                        SaveOutcome.NeedsNotification -> toast(NOTIFICATION_OFF)
+                        SaveOutcome.NeedsExactAlarm -> toast("알람 및 리마인더를 허용해야 제시각에 알려 드릴 수 있어요")
+                        else -> Unit
+                    }
+                }
+                val askExactAlarm = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        toast("제시각에 알리려면 알람 및 리마인더를 허용해 주세요")
+                        exactAlarmSettings.launch(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
+                    }
+                }
+                val afterNotificationAsk = {
+                    when (reserve.save()) {
+                        SaveOutcome.NeedsNotification -> toast(NOTIFICATION_OFF)
+                        SaveOutcome.NeedsExactAlarm -> askExactAlarm()
+                        else -> Unit
+                    }
+                }
+                val notificationRequest = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { afterNotificationAsk() }
+                val notificationSettings = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { afterNotificationAsk() }
+                // 가이드에서 한 번 거절했으면 OS가 한 번 더 묻게 해 준다. 두 번 거절했거나 앱 알림·예약 채널을 끈 경우엔 앱이 켤 수 없어 알림 설정 화면으로
+                val askNotification = {
+                    val canAsk = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                        shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
+                    if (canAsk) {
+                        notificationRequest.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    } else {
+                        toast(NOTIFICATION_OFF)
+                        notificationSettings.launch(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
                     }
                 }
                 val pending by reservationIntent
@@ -188,10 +224,10 @@ class MainActivity : ComponentActivity() {
                                         onSetTime = reserve::setTime, onLead = reserve::setLead, onPage = reserve::showPage,
                                         onToggleDay = reserve::toggleDay,
                                         onSave = {
-                                            // 처음 예약할 때 "알람 및 리마인더" 권한부터(개발자 결정). 설정에서 돌아오면 다시 저장해 본다
-                                            if (reserve.save() == SaveOutcome.NeedsExactAlarm && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                                Toast.makeText(this@MainActivity, "제시각에 알리려면 알람 및 리마인더를 허용해 주세요", Toast.LENGTH_LONG).show()
-                                                exactAlarmSettings.launch(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:$packageName")))
+                                            when (reserve.save()) {
+                                                SaveOutcome.NeedsNotification -> askNotification()
+                                                SaveOutcome.NeedsExactAlarm -> askExactAlarm()
+                                                else -> Unit
                                             }
                                         },
                                         onDelete = reserve::delete,

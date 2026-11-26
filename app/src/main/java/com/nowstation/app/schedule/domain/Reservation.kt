@@ -108,6 +108,8 @@ interface ReservationStore {
 interface ReservationAlarms {
     /** 나갈 시각 직전 알림을 정확히 울리려면 "알람 및 리마인더" 권한이 필요하다(Android 12+). */
     fun canExact(): Boolean
+    /** 알림이 꺼져 있으면 알람이 울려도 카드가 안 보인다 → 저장 전에 받는다(iOS와 같음). */
+    fun canNotify(): Boolean
     fun set(id: String, at: ZonedDateTime)
     fun cancel(id: String)
     /** "5분 뒤 다시": 예약의 다음 회차와 따로 한 번 더. */

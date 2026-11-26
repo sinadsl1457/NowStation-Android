@@ -1,11 +1,13 @@
 package com.nowstation.app.schedule.alarm
 
 import android.app.AlarmManager
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.core.app.NotificationManagerCompat
 import com.nowstation.app.MainActivity
 import com.nowstation.app.schedule.domain.ReservationAlarms
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,6 +22,14 @@ class AndroidReservationAlarms @Inject constructor(@ApplicationContext private v
     private val manager = context.getSystemService(AlarmManager::class.java)
 
     override fun canExact(): Boolean = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || manager.canScheduleExactAlarms()
+
+    /** 앱 알림 전체(Android 13+는 알림 권한)와 예약 알림 채널 둘 다 켜져 있어야 카드가 보인다. 채널은 첫 알림 전엔 없을 수 있다. */
+    override fun canNotify(): Boolean {
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return false
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true
+        val channel = context.getSystemService(NotificationManager::class.java).getNotificationChannel(ReservationNotifications.CHANNEL_ID)
+        return channel == null || channel.importance != NotificationManager.IMPORTANCE_NONE
+    }
 
     override fun set(id: String, at: ZonedDateTime) = arm(fire(id, ReservationReceiver.ACTION_ALERT), at)
 

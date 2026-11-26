@@ -40,6 +40,7 @@ class ReservationsTest {
         val set = mutableMapOf<String, ZonedDateTime>()
         val snoozed = mutableMapOf<String, ZonedDateTime>()
         override fun canExact() = true
+        override fun canNotify() = true
         override fun set(id: String, at: ZonedDateTime) { set[id] = at }
         override fun cancel(id: String) { set.remove(id) }
         override fun snooze(id: String, at: ZonedDateTime) { snoozed[id] = at }
