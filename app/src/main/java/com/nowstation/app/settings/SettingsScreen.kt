@@ -44,8 +44,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -71,6 +69,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.nowstation.app.BuildConfig
+import com.nowstation.app.core.ui.AppSwitch
 import com.nowstation.app.core.ui.Brand
 import com.nowstation.app.core.ui.DarkStatusBarIcons
 import com.nowstation.app.core.ui.Ground
@@ -379,7 +378,7 @@ private fun Toggle(title: String, sub: String, checked: Boolean, enabled: Boolea
             Text(sub, fontSize = 13.sp, color = Muted)
         }
         Spacer(Modifier.width(12.dp))
-        Switch(checked = checked && enabled, onCheckedChange = onChange, enabled = enabled, colors = SwitchDefaults.colors(checkedTrackColor = Brand))
+        AppSwitch(checked = checked && enabled, onCheckedChange = onChange, enabled = enabled)
     }
 }
 

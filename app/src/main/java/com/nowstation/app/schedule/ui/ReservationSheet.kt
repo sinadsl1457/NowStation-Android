@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -42,6 +41,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.nowstation.app.core.ui.AppSwitch
 import com.nowstation.app.core.ui.Brand
 import com.nowstation.app.core.ui.Ground
 import com.nowstation.app.core.ui.LineDot
@@ -240,7 +240,7 @@ fun ReservationRow(r: Reservation, today: LocalDate, onEdit: () -> Unit, onToggl
                 Text(ReservationTexts.detail(r), fontSize = 13.sp, color = Muted.copy(alpha = dim))
             }
         }
-        Switch(
+        AppSwitch(
             checked = r.enabled,
             onCheckedChange = onToggle,
             modifier = Modifier.padding(end = 12.dp),
