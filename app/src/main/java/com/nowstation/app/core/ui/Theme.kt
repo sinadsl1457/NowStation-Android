@@ -24,7 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// 파랑: 지원 노선 색(초록·노랑·빨강)과 겹치지 않는다. 주황은 수인분당선과 구분이 안 돼 쓰지 않았다
+// 파랑: 지원 노선 색(초록·주황·노랑·빨강)과 겹치지 않는다. 주황은 3호선·수인분당선과 구분이 안 돼 쓰지 않았다
 val Brand = Color(0xFF1F4FD8)
 val BrandTint = Color(0xFFEAF0FF)
 val Ground = Color(0xFFF4F7FC)
@@ -35,6 +35,7 @@ val Hairline = Color(0xFFE3E8F2)
 /** 노선 공식 색. 서버가 주는 표시 이름(2호선 등)으로 찾고, 모르면 대표색. */
 fun lineColor(line: String?): Color = when (line) {
     "2호선" -> Color(0xFF00A84D)
+    "3호선" -> Color(0xFFEF7C1C)
     "수인분당선" -> Color(0xFFF5A200)
     "신분당선" -> Color(0xFFD4003B)
     else -> Brand
