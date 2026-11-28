@@ -41,7 +41,9 @@ data class ActiveRide(
         fun stationPassed(before: ActiveRide?, after: ActiveRide?): Boolean {
             val b = before?.view ?: return false
             val a = after?.view ?: return false
-            return a.rideId == b.rideId && a.status == RideStatus.MOVING && !a.prepareToAlight &&
+            // 골라 둔 열차가 타는 역·갈아탈 역으로 다가오는 중이면 사람은 아직 승강장에 있다(에뮬레이터 재생에서 탑승 전에 "이번 역 태평"이 떴다)
+            val boarding = a.thisStation == after.origin || a.legs.any { it.from == a.thisStation }
+            return a.rideId == b.rideId && a.status == RideStatus.MOVING && !a.prepareToAlight && !boarding &&
                 b.thisStation != null && a.thisStation != null && a.thisStation != b.thisStation
         }
     }

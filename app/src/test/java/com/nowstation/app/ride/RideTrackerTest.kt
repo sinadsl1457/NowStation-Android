@@ -161,6 +161,11 @@ class RideTrackerTest {
         assertFalse("위치를 모르다가 다시 찾음", ActiveRide.stationPassed(ride(RideStatus.STALE, null), ride(moving, "서울숲")))
         assertFalse("탑승 시작", ActiveRide.stationPassed(null, ride(moving, "서울숲")))
         assertFalse("새 탑승", ActiveRide.stationPassed(ride(RideStatus.AT_STATION, "선릉", id = "r1"), ride(moving, "역삼", id = "r2")))
+        // 골라 둔 열차가 타는 역·갈아탈 역으로 다가오는 중: 사람은 아직 승강장에 있다(에뮬레이터 재생에서 "이번 역 태평"이 탑승 전에 떴다)
+        assertFalse("타는 역으로 다가오는 열차", ActiveRide.stationPassed(ride(RideStatus.AT_STATION, "가천대"), ride(moving, "태평")))
+        val legs = listOf(RideLeg("수인분당선", "태평", "왕십리"), RideLeg("2호선", "왕십리", "홍대입구"))
+        fun withLegs(r: ActiveRide) = r.copy(view = r.view.copy(legs = legs))
+        assertFalse("갈아탈 역으로 다가오는 다음 구간 열차", ActiveRide.stationPassed(withLegs(ride(RideStatus.AT_STATION, "상왕십리")), withLegs(ride(moving, "왕십리"))))
     }
 
     @Test
