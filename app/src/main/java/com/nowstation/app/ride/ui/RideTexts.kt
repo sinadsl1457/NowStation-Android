@@ -12,7 +12,7 @@ object RideTexts {
         val v = ride.view
         return when {
             v.status == RideStatus.ARRIVED -> "${v.thisStation} 도착"
-            // 한 정거장 전부터 켜지므로 이번 역이 아니라 구간 끝(내릴·갈아탈 역) 이름으로
+            // 서버가 내릴·갈아탈 역 바로 앞 역을 떠나면 켠다. 이름은 구간 끝(내릴·갈아탈 역)으로
             v.prepareToAlight && (v.target ?: v.thisStation) != null -> (v.target ?: v.thisStation).let { if (isTransfer(ride)) "곧 $it, 갈아탈 준비하세요" else "곧 $it, 내릴 준비하세요" }
             v.status == RideStatus.WAITING -> "${v.thisStation ?: ride.origin}역에서 기다리는 중"
             v.status == RideStatus.STALE || v.thisStation == null -> "위치 확인 중"
@@ -69,7 +69,7 @@ object RideTexts {
         val dest = ride.destination ?: ride.view.target ?: return null
         val n = ride.view.totalRemainingStops ?: ride.view.remainingStops ?: return null
         val name = if (ride.view.totalRemainingStops != null) dest else (ride.view.target ?: dest)
-        return if (n == 0) "이번 역이 ${name}이에요" else "${name}까지 ${n}정거장"
+        return if (n == 0) "이번 역에서 내려요" else "${name}까지 ${n}정거장"
     }
 
     /** 노선도 위 열차의 그 역에서의 상태: 공공 데이터 그대로라 위쪽 "이번 정거장"(다가오는 역)과 헷갈리지 않게 적는다. */
