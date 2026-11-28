@@ -15,6 +15,8 @@ data class AlertPrefs(
     val alight: Boolean = true,
     /** 위 알림 때 진동(알람 용도라 무음 모드에서도 울림). */
     val vibrate: Boolean = true,
+    /** 역을 떠날 때마다 소리·진동 없이 잠깐 뜨는 배너(가로로 영상을 볼 때 다이나믹 아일랜드·상태 표시줄 칩 대신). */
+    val station: Boolean = true,
 )
 
 @Singleton
@@ -24,6 +26,7 @@ class AlertSettings @Inject constructor(private val prefs: SharedPreferences) {
             transfer = prefs.getBoolean(TRANSFER, true),
             alight = prefs.getBoolean(ALIGHT, true),
             vibrate = prefs.getBoolean(VIBRATE, true),
+            station = prefs.getBoolean(STATION, true),
         ),
     )
     val state: StateFlow<AlertPrefs> = _state.asStateFlow()
@@ -31,12 +34,13 @@ class AlertSettings @Inject constructor(private val prefs: SharedPreferences) {
     fun update(change: (AlertPrefs) -> AlertPrefs) {
         val next = change(_state.value)
         _state.value = next
-        prefs.edit().putBoolean(TRANSFER, next.transfer).putBoolean(ALIGHT, next.alight).putBoolean(VIBRATE, next.vibrate).apply()
+        prefs.edit().putBoolean(TRANSFER, next.transfer).putBoolean(ALIGHT, next.alight).putBoolean(VIBRATE, next.vibrate).putBoolean(STATION, next.station).apply()
     }
 
     private companion object {
         const val TRANSFER = "alert_transfer"
         const val ALIGHT = "alert_alight"
         const val VIBRATE = "alert_vibrate"
+        const val STATION = "alert_station"
     }
 }

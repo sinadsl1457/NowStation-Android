@@ -93,10 +93,13 @@ class RideService : LifecycleService() {
                             if (prefs.vibrate) vibrator.vibrate()
                             manager.notify(RideNotifications.ALIGHT_NOTIFICATION_ID, notifications.buildAlight(ride))
                         }
+                    } else if (ride != null && ActiveRide.stationPassed(previous, ride) && alertSettings.state.value.station) {
+                        manager.notify(RideNotifications.STATION_NOTIFICATION_ID, notifications.buildStation(ride))
                     }
                     previous = ride
                     if (ride == null) {
                         manager.cancel(RideNotifications.ALIGHT_NOTIFICATION_ID)
+                        manager.cancel(RideNotifications.STATION_NOTIFICATION_ID)
                         stopForeground(STOP_FOREGROUND_REMOVE)
                         stopSelf()
                     } else {

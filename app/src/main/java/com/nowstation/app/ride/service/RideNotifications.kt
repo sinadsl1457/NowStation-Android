@@ -37,7 +37,14 @@ class RideNotifications @Inject constructor(@ApplicationContext private val cont
             enableVibration(false)
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
-        context.getSystemService(NotificationManager::class.java).createNotificationChannels(listOf(channel, alight))
+        // 역마다 조용한 배너: 위로 내려와야 해서(가로 영상 위에서도) 높은 중요도, 대신 소리·진동은 없다
+        val station = NotificationChannel(STATION_CHANNEL_ID, "역마다 조용한 안내", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "역을 떠날 때마다 소리·진동 없이 잠깐 보여 줘요"
+            setSound(null, null)
+            enableVibration(false)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        }
+        context.getSystemService(NotificationManager::class.java).createNotificationChannels(listOf(channel, alight, station))
     }
 
     /** 내릴 역 직전 한 번: 다른 앱 위로 팝업, 잠금화면에도. 2분 뒤 저절로 사라진다(진행 중 알림이 계속 보여 주므로). */
@@ -52,6 +59,20 @@ class RideNotifications @Inject constructor(@ApplicationContext private val cont
             .setContentIntent(openApp())
             .setAutoCancel(true)
             .setTimeoutAfter(ALIGHT_TIMEOUT_MILLIS)
+            .build()
+
+    /** 역을 떠날 때 잠깐(토스트처럼): "이번 역 서울숲" / "홍대입구까지 13정거장". 같은 번호로 덮어써서 하나만 남는다. */
+    fun buildStation(ride: ActiveRide): Notification =
+        NotificationCompat.Builder(context, STATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_train)
+            .setContentTitle(RideTexts.title(ride))
+            .setContentText(RideTexts.remaining(ride) ?: RideTexts.detail(ride))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_NAVIGATION)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(openApp())
+            .setAutoCancel(true)
+            .setTimeoutAfter(STATION_TIMEOUT_MILLIS)
             .build()
 
     private fun openApp(): PendingIntent = PendingIntent.getActivity(
@@ -94,5 +115,9 @@ class RideNotifications @Inject constructor(@ApplicationContext private val cont
         const val ALIGHT_CHANNEL_ID = "alight"
         const val ALIGHT_NOTIFICATION_ID = 2
         private const val ALIGHT_TIMEOUT_MILLIS = 2 * 60 * 1000L
+        const val STATION_CHANNEL_ID = "station"
+        const val STATION_NOTIFICATION_ID = 3
+        /** 개발자 결정: 5초는 길다. */
+        private const val STATION_TIMEOUT_MILLIS = 2_500L
     }
 }

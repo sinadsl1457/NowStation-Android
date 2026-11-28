@@ -115,6 +115,8 @@ private fun MainPage(alertSettings: AlertSettings, onBack: () -> Unit, onShowGui
                     Toggle("내릴 역 알림", "내릴 역 한 정거장 전에 화면 위로 알려 줘요", prefs.alight) { on -> alertSettings.update { it.copy(alight = on) } }
                     Line()
                     Toggle("진동", "위 알림 때 진동(무음 모드에서도 울려요)", prefs.vibrate, enabled = prefs.transfer || prefs.alight) { on -> alertSettings.update { it.copy(vibrate = on) } }
+                    Line()
+                    Toggle("역마다 조용히 알림", "역을 떠날 때마다 소리·진동 없이 잠깐 보여 줘요(가로로 영상을 볼 때)", prefs.station) { on -> alertSettings.update { it.copy(station = on) } }
                 }
                 Text(
                     "탑승 중 잠금화면·알림창의 현재역 표시는 화면을 꺼도 탑승을 따라가는 데 필요해서 끌 수 없어요. 탑승을 끝내면 사라져요.",

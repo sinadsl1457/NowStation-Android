@@ -33,6 +33,17 @@ data class ActiveRide(
         fun alightAlertStarted(before: ActiveRide?, after: ActiveRide?): Boolean =
             after?.view?.prepareToAlight == true &&
                 (before?.view?.prepareToAlight != true || before.view.rideId != after.view.rideId)
+
+        /**
+         * 조용한 역 안내(가로로 영상을 볼 때 다이나믹 아일랜드·상태 표시줄 칩이 안 보여서, 개발자 결정): 열차가 역을 떠나 이번 역이 바뀐 순간.
+         * 내릴·갈아탈 준비가 켜지는 때는 소리 있는 알림이 대신하고, 위치를 모르다가 다시 찾은 때는 떠난 순간이 아니라 뺀다.
+         */
+        fun stationPassed(before: ActiveRide?, after: ActiveRide?): Boolean {
+            val b = before?.view ?: return false
+            val a = after?.view ?: return false
+            return a.rideId == b.rideId && a.status == RideStatus.MOVING && !a.prepareToAlight &&
+                b.thisStation != null && a.thisStation != null && a.thisStation != b.thisStation
+        }
     }
 }
 

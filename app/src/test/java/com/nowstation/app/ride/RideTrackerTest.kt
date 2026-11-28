@@ -147,6 +147,23 @@ class RideTrackerTest {
     }
 
     @Test
+    fun `조용한 역 안내는 열차가 역을 떠나 이번 역이 바뀐 순간에만`() = runTest {
+        fun ride(status: RideStatus, here: String?, alight: Boolean = false, id: String = "r1") =
+            ActiveRide("태평", "홍대입구", view(status, here, alight = alight).copy(rideId = id), online = true, updatedAt = clock.instant())
+        val moving = RideStatus.MOVING
+
+        assertTrue("압구정로데오를 떠나 서울숲으로", ActiveRide.stationPassed(ride(RideStatus.AT_STATION, "압구정로데오"), ride(moving, "서울숲")))
+        assertTrue("타는 역을 떠남", ActiveRide.stationPassed(ride(RideStatus.WAITING, "태평"), ride(moving, "가천대")))
+        assertFalse("같은 역으로 가는 중 갱신", ActiveRide.stationPassed(ride(moving, "서울숲"), ride(moving, "서울숲")))
+        assertFalse("역에 도착만 함", ActiveRide.stationPassed(ride(moving, "서울숲"), ride(RideStatus.AT_STATION, "서울숲")))
+        assertFalse("역 사이 정차 뒤 다시 출발", ActiveRide.stationPassed(ride(RideStatus.HOLDING_BETWEEN, "서울숲"), ride(moving, "서울숲")))
+        assertFalse("내릴·갈아탈 준비는 소리 있는 알림이 대신", ActiveRide.stationPassed(ride(RideStatus.AT_STATION, "서울숲"), ride(moving, "왕십리", alight = true)))
+        assertFalse("위치를 모르다가 다시 찾음", ActiveRide.stationPassed(ride(RideStatus.STALE, null), ride(moving, "서울숲")))
+        assertFalse("탑승 시작", ActiveRide.stationPassed(null, ride(moving, "서울숲")))
+        assertFalse("새 탑승", ActiveRide.stationPassed(ride(RideStatus.AT_STATION, "선릉", id = "r1"), ride(moving, "역삼", id = "r2")))
+    }
+
+    @Test
     fun `내릴 역 알림은 켜지는 순간에만 울린다`() = runTest {
         fun ride(alight: Boolean, id: String = "r1") =
             ActiveRide("태평", "강남", view(alight = alight).copy(rideId = id), online = true, updatedAt = clock.instant())
